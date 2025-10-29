@@ -115,7 +115,7 @@ function App() {
     return (
         <div className="bg-slate-900 text-slate-300 min-h-screen font-sans">
             <header className="bg-slate-950/70 backdrop-blur-sm border-b border-slate-700/50 sticky top-0 z-10">
-                <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         <div className="flex items-baseline gap-3">
                             <h1 className="text-3xl font-bold text-slate-100 font-orbitron tracking-wider">
@@ -128,8 +128,8 @@ function App() {
                     </div>
                 </div>
             </header>
-            
-            <main className="max-w-screen-2xl mx-auto p-4 sm:p-6 lg:p-8">
+
+            <main className="p-4 sm:p-6 lg:p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" style={{height: 'calc(100vh - 112px)'}}>
                     <div className="lg:col-span-2 h-full">
                         <TemplatesPanel onSelectTemplate={handleSelectTemplate} />
