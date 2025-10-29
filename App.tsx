@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 // Fix: Use explicit file extension in import.
 import { FileUploader } from './components/FileUploader.tsx';
 // Fix: Use explicit file extension in import.
@@ -9,7 +9,12 @@ import { HistoryViewer } from './components/HistoryViewer.tsx';
 // Fix: Use explicit file extension in import.
 import { TemplatesPanel, type Template } from './components/TemplatesPanel.tsx';
 // Fix: Use explicit file extension in import.
+import { ApiKeyModal } from './components/ApiKeyModal.tsx';
+// Fix: Use explicit file extension in import.
+import { KeyIcon } from './components/Icons.tsx';
+// Fix: Use explicit file extension in import.
 import type { UploadedFile, ExtractionResult, SchemaField } from './types.ts';
+import { setApiKey, getApiKey } from './services/geminiService.ts';
 
 // Helper to create a dummy file for the example
 function createExampleFile(): File {
@@ -33,10 +38,22 @@ function App() {
     const [activeFileId, setActiveFileId] = useState<string | null>(null);
     const [history, setHistory] = useState<ExtractionResult[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    
+    const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
+
     // State for the editor, which can be reused across different files
     const [prompt, setPrompt] = useState<string>('Extrae la información clave del siguiente documento según el esquema JSON proporcionado.');
     const [schema, setSchema] = useState<SchemaField[]>([{ id: `field-${Date.now()}`, name: '', type: 'STRING' }]);
+
+    // Check if API key is set on mount
+    useEffect(() => {
+        const savedKey = localStorage.getItem('gemini_api_key');
+        if (savedKey) {
+            setApiKey(savedKey);
+        } else {
+            // Show modal if no API key is set
+            setIsApiKeyModalOpen(true);
+        }
+    }, []);
 
     const activeFile = useMemo(() => files.find(f => f.id === activeFileId), [files, activeFileId]);
 
@@ -125,6 +142,14 @@ function App() {
                                 trabajando para
                             </p>
                         </div>
+                        <button
+                            onClick={() => setIsApiKeyModalOpen(true)}
+                            className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300 text-sm transition-colors"
+                            title="Configurar API Key"
+                        >
+                            <KeyIcon className="w-4 h-4" />
+                            <span className="hidden sm:inline">API Key</span>
+                        </button>
                     </div>
                 </div>
             </header>
@@ -159,6 +184,11 @@ function App() {
                     </div>
                 </div>
             </main>
+
+            <ApiKeyModal
+                isOpen={isApiKeyModalOpen}
+                onClose={() => setIsApiKeyModalOpen(false)}
+            />
         </div>
     );
 }

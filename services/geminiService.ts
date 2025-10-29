@@ -87,12 +87,23 @@ const convertSchemaToGemini = (schema: SchemaField[]): { type: Type, properties:
 };
 
 let ai: GoogleGenAI | null = null;
+let currentApiKey: string | null = null;
+
+export const setApiKey = (apiKey: string) => {
+    currentApiKey = apiKey;
+    ai = null; // Reset AI instance to use new key
+};
+
+export const getApiKey = (): string | null => {
+    return currentApiKey;
+};
+
 const getGenAI = () => {
+    if (!currentApiKey) {
+        throw new Error("An API Key must be set when running in a browser");
+    }
     if (!ai) {
-        if (!process.env.API_KEY) {
-            // The prompt says to assume API_KEY is available.
-        }
-        ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        ai = new GoogleGenAI({ apiKey: currentApiKey });
     }
     return ai;
 }
