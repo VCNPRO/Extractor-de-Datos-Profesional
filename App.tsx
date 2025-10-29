@@ -109,9 +109,14 @@ function App() {
             <header className="bg-slate-950/70 backdrop-blur-sm border-b border-slate-700/50 sticky top-0 z-10">
                 <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
-                        <h1 className="text-xl font-bold text-slate-100">
-                           Extractor de Documentos Inteligente
-                        </h1>
+                        <div className="flex flex-col">
+                            <h1 className="text-3xl font-bold text-slate-100 font-orbitron tracking-wider">
+                                verbadoc
+                            </h1>
+                            <p className="text-xs text-slate-400 mt-0.5 font-sans">
+                                trabajando para
+                            </p>
+                        </div>
                     </div>
                 </div>
             </header>
