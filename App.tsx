@@ -9,14 +9,10 @@ import { HistoryViewer } from './components/HistoryViewer.tsx';
 // Fix: Use explicit file extension in import.
 import { TemplatesPanel, type Template } from './components/TemplatesPanel.tsx';
 // Fix: Use explicit file extension in import.
-import { ApiKeyModal } from './components/ApiKeyModal.tsx';
-// Fix: Use explicit file extension in import.
 import { PdfViewer } from './components/PdfViewer.tsx';
 // Fix: Use explicit file extension in import.
-import { KeyIcon } from './components/Icons.tsx';
-// Fix: Use explicit file extension in import.
 import type { UploadedFile, ExtractionResult, SchemaField } from './types.ts';
-import { setApiKey, getApiKey } from './services/geminiService.ts';
+import { setApiKey } from './services/geminiService.ts';
 
 // Helper to create a dummy file for the example
 function createExampleFile(): File {
@@ -40,34 +36,23 @@ function App() {
     const [activeFileId, setActiveFileId] = useState<string | null>(null);
     const [history, setHistory] = useState<ExtractionResult[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
     const [viewingFile, setViewingFile] = useState<File | null>(null);
-    const [isUsingEnvApiKey, setIsUsingEnvApiKey] = useState<boolean>(false);
+    const [apiKeyError, setApiKeyError] = useState<boolean>(false);
 
     // State for the editor, which can be reused across different files
     const [prompt, setPrompt] = useState<string>('Extrae la información clave del siguiente documento según el esquema JSON proporcionado.');
     const [schema, setSchema] = useState<SchemaField[]>([{ id: `field-${Date.now()}`, name: '', type: 'STRING' }]);
 
-    // Check if API key is set on mount
+    // Set API key from environment variables on mount
     useEffect(() => {
-        // Try to get API key from environment variables first (Vercel deployment)
         const envApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
 
         if (envApiKey) {
-            // Use environment variable (production)
             setApiKey(envApiKey);
-            setIsUsingEnvApiKey(true);
+            setApiKeyError(false);
         } else {
-            // Fall back to localStorage (local development)
-            const savedKey = localStorage.getItem('gemini_api_key');
-            if (savedKey) {
-                setApiKey(savedKey);
-                setIsUsingEnvApiKey(false);
-            } else {
-                // Show modal if no API key is set
-                setIsApiKeyModalOpen(true);
-                setIsUsingEnvApiKey(false);
-            }
+            console.error('GEMINI_API_KEY no está configurada en las variables de entorno.');
+            setApiKeyError(true);
         }
     }, []);
 
@@ -209,23 +194,36 @@ function App() {
                                 trabajando para
                             </p>
                         </div>
-                        <button
-                            onClick={() => !isUsingEnvApiKey && setIsApiKeyModalOpen(true)}
-                            className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-colors ${
-                                isUsingEnvApiKey
-                                    ? 'bg-green-900/30 border-green-700/50 text-green-300 cursor-default'
-                                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300 cursor-pointer'
-                            }`}
-                            title={isUsingEnvApiKey ? "API Key configurada desde variables de entorno" : "Configurar API Key"}
-                        >
-                            <KeyIcon className="w-4 h-4" />
-                            <span className="hidden sm:inline">
-                                {isUsingEnvApiKey ? 'API Key (ENV)' : 'API Key'}
-                            </span>
-                        </button>
                     </div>
                 </div>
             </header>
+
+            {apiKeyError && (
+                <div className="mx-4 sm:mx-6 lg:mx-8 mt-4">
+                    <div className="bg-red-900/20 border border-red-700/50 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <div className="flex-grow">
+                                <h3 className="text-red-300 font-semibold mb-2">Error de Configuración: API Key no encontrada</h3>
+                                <p className="text-red-200/80 text-sm mb-3">
+                                    La variable de entorno <code className="bg-red-950/50 px-2 py-0.5 rounded">GEMINI_API_KEY</code> no está configurada.
+                                </p>
+                                <div className="text-sm text-red-200/70">
+                                    <p className="font-medium mb-1">Para configurarla en Vercel:</p>
+                                    <ol className="list-decimal list-inside space-y-1 ml-2">
+                                        <li>Ve a Settings → Environment Variables</li>
+                                        <li>Agrega <code className="bg-red-950/50 px-1 rounded">GEMINI_API_KEY</code></li>
+                                        <li>Obtén tu API key en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-red-300 underline hover:text-red-200">Google AI Studio</a></li>
+                                        <li>Redeploy la aplicación</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <main className="p-4 sm:p-6 lg:p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" style={{height: 'calc(100vh - 112px)'}}>
@@ -260,11 +258,6 @@ function App() {
                     </div>
                 </div>
             </main>
-
-            <ApiKeyModal
-                isOpen={isApiKeyModalOpen}
-                onClose={() => setIsApiKeyModalOpen(false)}
-            />
 
             <PdfViewer
                 file={viewingFile}

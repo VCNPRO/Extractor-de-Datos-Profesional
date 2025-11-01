@@ -1,8 +1,8 @@
 # Configuración de Vercel para Extractor de Datos Profesional
 
-## Variables de Entorno Requeridas
+## ⚠️ Variables de Entorno REQUERIDAS
 
-Para que la aplicación funcione correctamente en Vercel, asegúrate de tener configurada la siguiente variable de entorno:
+**IMPORTANTE:** Esta aplicación **NO tiene interfaz para ingresar API keys**. La variable de entorno `GEMINI_API_KEY` es **obligatoria** y debe configurarse en Vercel antes del deploy.
 
 ### En Vercel Dashboard:
 
@@ -27,14 +27,14 @@ Environments: Production, Preview, Development
 ## Comportamiento de la App
 
 ### En Producción (Vercel):
-- ✅ Si `GEMINI_API_KEY` está configurada en Vercel → Se usa automáticamente
-- 🟢 El botón mostrará "API Key (ENV)" en verde
-- 🔒 No se pedirá al usuario que ingrese la clave
+- ✅ Si `GEMINI_API_KEY` está configurada → La app funciona normalmente
+- ❌ Si NO está configurada → Muestra banner de error en rojo con instrucciones
+- 🔒 **No hay botón de API Key** - Solo usa variables de entorno
 
 ### En Desarrollo Local:
-- 📝 Si existe `.env.local` con `GEMINI_API_KEY` → Se usa automáticamente
-- 💾 Si no hay `.env.local` → Busca en localStorage del navegador
-- ⚠️ Si no hay clave guardada → Muestra modal para ingresar
+- 📝 Crea un archivo `.env.local` con `GEMINI_API_KEY=tu_clave_aqui`
+- ✅ La app usará la clave del archivo `.env.local`
+- ❌ Si no existe el archivo → Muestra banner de error
 
 ## Archivos Modificados
 
@@ -58,11 +58,22 @@ vercel --prod
 ## Verificación
 
 Después del deploy, verifica que:
-1. El botón "API Key" en la esquina superior derecha muestre "API Key (ENV)" en verde
-2. La aplicación NO solicite ingresar la API key al cargar
+1. **NO aparezca el banner de error rojo** en la parte superior
+2. La aplicación cargue normalmente sin errores
 3. Puedes procesar documentos sin errores de autenticación
+
+## ❌ Si ves el banner de error
+
+Si ves un banner rojo que dice **"Error de Configuración: API Key no encontrada"**:
+
+1. Verifica que agregaste `GEMINI_API_KEY` en las variables de entorno de Vercel
+2. Asegúrate de seleccionar **Production, Preview, y Development**
+3. Haz un **Redeploy** desde el dashboard de Vercel
+4. Espera 1-2 minutos a que termine el build
 
 ---
 
 **Nota de Seguridad:**
-La API key configurada en Vercel solo está disponible en tiempo de build. Aunque esto es más seguro que localStorage, para máxima seguridad considera crear API routes serverless en el futuro.
+✅ Sin botón de API Key en el navegador - Más seguro
+✅ Solo administradores con acceso a Vercel pueden cambiar la clave
+✅ Los usuarios no pueden ver ni modificar la API key
