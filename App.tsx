@@ -45,13 +45,14 @@ function App() {
 
     // Set API key from environment variables on mount
     useEffect(() => {
-        const envApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+        // En Vite, las variables de entorno se acceden via import.meta.env
+        const envApiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
         if (envApiKey) {
             setApiKey(envApiKey);
             setApiKeyError(false);
         } else {
-            console.error('GEMINI_API_KEY no está configurada en las variables de entorno.');
+            console.error('VITE_GEMINI_API_KEY no está configurada en las variables de entorno.');
             setApiKeyError(true);
         }
     }, []);
@@ -208,13 +209,13 @@ function App() {
                             <div className="flex-grow">
                                 <h3 className="text-red-300 font-semibold mb-2">Error de Configuración: API Key no encontrada</h3>
                                 <p className="text-red-200/80 text-sm mb-3">
-                                    La variable de entorno <code className="bg-red-950/50 px-2 py-0.5 rounded">GEMINI_API_KEY</code> no está configurada.
+                                    La variable de entorno <code className="bg-red-950/50 px-2 py-0.5 rounded">VITE_GEMINI_API_KEY</code> no está configurada.
                                 </p>
                                 <div className="text-sm text-red-200/70">
                                     <p className="font-medium mb-1">Para configurarla en Vercel:</p>
                                     <ol className="list-decimal list-inside space-y-1 ml-2">
                                         <li>Ve a Settings → Environment Variables</li>
-                                        <li>Agrega <code className="bg-red-950/50 px-1 rounded">GEMINI_API_KEY</code></li>
+                                        <li>Agrega <code className="bg-red-950/50 px-1 rounded">VITE_GEMINI_API_KEY</code></li>
                                         <li>Obtén tu API key en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-red-300 underline hover:text-red-200">Google AI Studio</a></li>
                                         <li>Redeploy la aplicación</li>
                                     </ol>

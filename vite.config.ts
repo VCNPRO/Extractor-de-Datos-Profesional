@@ -4,9 +4,9 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
-    // En Vercel, las variables de entorno vienen de process.env, no de archivos .env
-    // Usar process.env.GEMINI_API_KEY si existe, sino usar el de .env local
-    const apiKey = process.env.GEMINI_API_KEY || env.GEMINI_API_KEY;
+    // En Vercel, usar VITE_GEMINI_API_KEY (con prefijo VITE_ para cliente)
+    // Prioridad: process.env.VITE_GEMINI_API_KEY > env.VITE_GEMINI_API_KEY > env.GEMINI_API_KEY
+    const apiKey = process.env.VITE_GEMINI_API_KEY || env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY;
 
     return {
       server: {
@@ -15,8 +15,7 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(apiKey),
-        'process.env.GEMINI_API_KEY': JSON.stringify(apiKey)
+        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(apiKey)
       },
       resolve: {
         alias: {

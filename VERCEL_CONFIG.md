@@ -2,7 +2,9 @@
 
 ## ⚠️ Variables de Entorno REQUERIDAS
 
-**IMPORTANTE:** Esta aplicación **NO tiene interfaz para ingresar API keys**. La variable de entorno `GEMINI_API_KEY` es **obligatoria** y debe configurarse en Vercel antes del deploy.
+**IMPORTANTE:** Esta aplicación **NO tiene interfaz para ingresar API keys**. La variable de entorno `VITE_GEMINI_API_KEY` es **obligatoria** y debe configurarse en Vercel antes del deploy.
+
+**Nota:** El prefijo `VITE_` es necesario en Vite para que las variables estén disponibles en el cliente.
 
 ### En Vercel Dashboard:
 
@@ -12,7 +14,7 @@
 4. Agrega la siguiente variable:
 
 ```
-Nombre: GEMINI_API_KEY
+Nombre: VITE_GEMINI_API_KEY
 Valor: [Tu API Key de Google AI Studio]
 Environments: Production, Preview, Development
 ```
@@ -27,19 +29,19 @@ Environments: Production, Preview, Development
 ## Comportamiento de la App
 
 ### En Producción (Vercel):
-- ✅ Si `GEMINI_API_KEY` está configurada → La app funciona normalmente
+- ✅ Si `VITE_GEMINI_API_KEY` está configurada → La app funciona normalmente
 - ❌ Si NO está configurada → Muestra banner de error en rojo con instrucciones
 - 🔒 **No hay botón de API Key** - Solo usa variables de entorno
 
 ### En Desarrollo Local:
-- 📝 Crea un archivo `.env.local` con `GEMINI_API_KEY=tu_clave_aqui`
+- 📝 Crea un archivo `.env.local` con `VITE_GEMINI_API_KEY=tu_clave_aqui`
 - ✅ La app usará la clave del archivo `.env.local`
 - ❌ Si no existe el archivo → Muestra banner de error
 
 ## Archivos Modificados
 
-- `App.tsx` - Ahora lee primero de `process.env.GEMINI_API_KEY`
-- `vite.config.ts` - Ya estaba configurado correctamente para inyectar variables de entorno
+- `App.tsx` - Ahora lee de `import.meta.env.VITE_GEMINI_API_KEY`
+- `vite.config.ts` - Configurado para inyectar `VITE_GEMINI_API_KEY` desde process.env
 
 ## Deploy a Vercel
 
@@ -66,7 +68,7 @@ Después del deploy, verifica que:
 
 Si ves un banner rojo que dice **"Error de Configuración: API Key no encontrada"**:
 
-1. Verifica que agregaste `GEMINI_API_KEY` en las variables de entorno de Vercel
+1. Verifica que agregaste `VITE_GEMINI_API_KEY` en las variables de entorno de Vercel
 2. Asegúrate de seleccionar **Production, Preview, y Development**
 3. Haz un **Redeploy** desde el dashboard de Vercel
 4. Espera 1-2 minutos a que termine el build
