@@ -11,6 +11,8 @@ import { TemplatesPanel, type Template } from './components/TemplatesPanel.tsx';
 // Fix: Use explicit file extension in import.
 import { PdfViewer } from './components/PdfViewer.tsx';
 // Fix: Use explicit file extension in import.
+import { HelpModal } from './components/HelpModal.tsx';
+// Fix: Use explicit file extension in import.
 import type { UploadedFile, ExtractionResult, SchemaField } from './types.ts';
 import { setApiKey } from './services/geminiService.ts';
 
@@ -38,6 +40,7 @@ function App() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [viewingFile, setViewingFile] = useState<File | null>(null);
     const [apiKeyError, setApiKeyError] = useState<boolean>(false);
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
 
     // State for the editor, which can be reused across different files
     const [prompt, setPrompt] = useState<string>('Extrae la información clave del siguiente documento según el esquema JSON proporcionado.');
@@ -195,6 +198,16 @@ function App() {
                                 trabajando para
                             </p>
                         </div>
+                        <button
+                            onClick={() => setIsHelpModalOpen(true)}
+                            className="flex items-center gap-2 px-3 py-2 bg-cyan-600 hover:bg-cyan-700 border border-cyan-500 rounded-lg text-white text-sm transition-colors"
+                            title="Ayuda y Guía de Usuario"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="hidden sm:inline">Ayuda</span>
+                        </button>
                     </div>
                 </div>
             </header>
@@ -263,6 +276,11 @@ function App() {
             <PdfViewer
                 file={viewingFile}
                 onClose={handleCloseViewer}
+            />
+
+            <HelpModal
+                isOpen={isHelpModalOpen}
+                onClose={() => setIsHelpModalOpen(false)}
             />
         </div>
     );

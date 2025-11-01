@@ -8,6 +8,7 @@ import { SchemaBuilder } from './SchemaBuilder.tsx';
 import { JsonViewer } from './JsonViewer.tsx';
 // Fix: Use explicit file extension in import.
 import { CubeIcon, ExclamationTriangleIcon, SparklesIcon } from './Icons.tsx';
+import { downloadCSV, downloadExcel, downloadJSON } from '../utils/exportUtils.ts';
 
 interface ExtractionEditorProps {
     file: UploadedFile | undefined;
@@ -138,7 +139,41 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, schema
 
             {file.extractedData && !file.error && (
                  <div className="border-t border-slate-700/50">
-                    <h3 className="text-base font-medium text-slate-200 p-4 md:p-6 pb-2">Resultados Extraídos</h3>
+                    <div className="flex justify-between items-center p-4 md:p-6 pb-2">
+                        <h3 className="text-base font-medium text-slate-200">Resultados Extraídos</h3>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => downloadJSON(file.extractedData!, file.file.name.replace(/\.[^/.]+$/, ""))}
+                                className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors flex items-center gap-1"
+                                title="Descargar JSON"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                JSON
+                            </button>
+                            <button
+                                onClick={() => downloadCSV(file.extractedData!, file.file.name.replace(/\.[^/.]+$/, ""))}
+                                className="text-xs px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors flex items-center gap-1"
+                                title="Descargar CSV"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                CSV
+                            </button>
+                            <button
+                                onClick={() => downloadExcel(file.extractedData!, file.file.name.replace(/\.[^/.]+$/, ""))}
+                                className="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors flex items-center gap-1"
+                                title="Descargar Excel"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Excel
+                            </button>
+                        </div>
+                    </div>
                     <div className="p-4 md:p-6 pt-0 bg-slate-900/50 max-h-96 overflow-y-auto">
                         <JsonViewer data={file.extractedData} />
                     </div>
