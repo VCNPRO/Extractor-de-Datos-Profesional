@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 // Fix: Use explicit file extension in import.
 import type { UploadedFile } from '../types.ts';
-import { UploadCloudIcon, FileIcon, TrashIcon, CheckCircleIcon, ExclamationCircleIcon, SparklesIcon } from './Icons';
+import { UploadCloudIcon, FileIcon, TrashIcon, CheckCircleIcon, ExclamationCircleIcon, SparklesIcon, EyeIcon } from './Icons';
 
 interface FileUploaderProps {
     files: UploadedFile[];
@@ -10,6 +10,9 @@ interface FileUploaderProps {
     activeFileId: string | null;
     onFileSelect: (id: string | null) => void;
     onUseExample: () => void;
+    onExtractAll?: () => void;
+    isLoading?: boolean;
+    onViewFile?: (file: File) => void;
 }
 
 const formatBytes = (bytes: number, decimals = 2): string => {
@@ -34,7 +37,7 @@ const StatusIndicator: React.FC<{ status: UploadedFile['status'] }> = ({ status 
     }
 }
 
-export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, activeFileId, onFileSelect, onUseExample }) => {
+export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, activeFileId, onFileSelect, onUseExample, onExtractAll, isLoading, onViewFile }) => {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -135,7 +138,18 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, act
                 <div className="mt-4 flex flex-col flex-grow min-h-0">
                     <div className="flex justify-between items-center mb-2">
                         <h3 className="text-sm font-semibold text-slate-300">Archivos Cargados ({files.length})</h3>
-                        <button onClick={onClearAll} className="text-xs text-red-400 hover:text-red-300 transition-colors">Limpiar Todo</button>
+                        <div className="flex gap-2">
+                            {onExtractAll && (
+                                <button
+                                    onClick={onExtractAll}
+                                    disabled={isLoading || !files.some(f => f.status === 'pendiente' || f.status === 'error')}
+                                    className="text-xs px-3 py-1 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-md transition-colors"
+                                >
+                                    {isLoading ? 'Procesando...' : 'Procesar Todos'}
+                                </button>
+                            )}
+                            <button onClick={onClearAll} className="text-xs text-red-400 hover:text-red-300 transition-colors">Limpiar Todo</button>
+                        </div>
                     </div>
                     <div className="overflow-y-auto pr-2 flex-grow">
                         <ul className="space-y-2">
@@ -155,6 +169,18 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, act
                                             </div>
                                             <div className="flex items-center gap-3 flex-shrink-0">
                                                 <StatusIndicator status={f.status} />
+                                                {onViewFile && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onViewFile(f.file);
+                                                        }}
+                                                        className="p-1 text-slate-500 hover:text-cyan-400 transition-colors rounded-full"
+                                                        title="Ver documento"
+                                                    >
+                                                        <EyeIcon className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                                 <button onClick={(e) => onRemoveFile(f.id, e)} className="p-1 text-slate-500 hover:text-red-400 transition-colors rounded-full">
                                                     <TrashIcon className="w-4 h-4" />
                                                 </button>

@@ -11,6 +11,8 @@ import { TemplatesPanel, type Template } from './components/TemplatesPanel.tsx';
 // Fix: Use explicit file extension in import.
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 // Fix: Use explicit file extension in import.
+import { PdfViewer } from './components/PdfViewer.tsx';
+// Fix: Use explicit file extension in import.
 import { KeyIcon } from './components/Icons.tsx';
 // Fix: Use explicit file extension in import.
 import type { UploadedFile, ExtractionResult, SchemaField } from './types.ts';
@@ -39,6 +41,8 @@ function App() {
     const [history, setHistory] = useState<ExtractionResult[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
+    const [viewingFile, setViewingFile] = useState<File | null>(null);
+    const [isUsingEnvApiKey, setIsUsingEnvApiKey] = useState<boolean>(false);
 
     // State for the editor, which can be reused across different files
     const [prompt, setPrompt] = useState<string>('Extrae la información clave del siguiente documento según el esquema JSON proporcionado.');
@@ -46,12 +50,24 @@ function App() {
 
     // Check if API key is set on mount
     useEffect(() => {
-        const savedKey = localStorage.getItem('gemini_api_key');
-        if (savedKey) {
-            setApiKey(savedKey);
+        // Try to get API key from environment variables first (Vercel deployment)
+        const envApiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+
+        if (envApiKey) {
+            // Use environment variable (production)
+            setApiKey(envApiKey);
+            setIsUsingEnvApiKey(true);
         } else {
-            // Show modal if no API key is set
-            setIsApiKeyModalOpen(true);
+            // Fall back to localStorage (local development)
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey) {
+                setApiKey(savedKey);
+                setIsUsingEnvApiKey(false);
+            } else {
+                // Show modal if no API key is set
+                setIsApiKeyModalOpen(true);
+                setIsUsingEnvApiKey(false);
+            }
         }
     }, []);
 
@@ -69,17 +85,17 @@ function App() {
 
         setIsLoading(true);
         // Reset status for the current file
-        setFiles(currentFiles => 
+        setFiles(currentFiles =>
             currentFiles.map(f => f.id === activeFile.id ? { ...f, status: 'procesando', error: undefined, extractedData: undefined } : f)
         );
 
         try {
             const extractedData = await extractDataFromDocument(activeFile.file, schema, prompt);
-            
-            setFiles(currentFiles => 
+
+            setFiles(currentFiles =>
                 currentFiles.map(f => f.id === activeFile.id ? { ...f, status: 'completado', extractedData: extractedData, error: undefined } : f)
             );
-    
+
             const newHistoryEntry: ExtractionResult = {
                 id: `hist-${Date.now()}`,
                 fileId: activeFile.id,
@@ -98,6 +114,49 @@ function App() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleExtractAll = async () => {
+        const pendingFiles = files.filter(f => f.status === 'pendiente' || f.status === 'error');
+        if (pendingFiles.length === 0) return;
+
+        // Lazy import the service
+        const { extractDataFromDocument } = await import('./services/geminiService.ts');
+
+        setIsLoading(true);
+
+        for (const file of pendingFiles) {
+            // Reset status for the current file
+            setFiles(currentFiles =>
+                currentFiles.map(f => f.id === file.id ? { ...f, status: 'procesando', error: undefined, extractedData: undefined } : f)
+            );
+
+            try {
+                const extractedData = await extractDataFromDocument(file.file, schema, prompt);
+
+                setFiles(currentFiles =>
+                    currentFiles.map(f => f.id === file.id ? { ...f, status: 'completado', extractedData: extractedData, error: undefined } : f)
+                );
+
+                const newHistoryEntry: ExtractionResult = {
+                    id: `hist-${Date.now()}-${file.id}`,
+                    fileId: file.id,
+                    fileName: file.file.name,
+                    schema: JSON.parse(JSON.stringify(schema)), // Deep copy schema
+                    extractedData: extractedData,
+                    timestamp: new Date().toISOString(),
+                };
+                setHistory(currentHistory => [newHistoryEntry, ...currentHistory]);
+
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Un error desconocido ocurrió.';
+                setFiles(currentFiles =>
+                    currentFiles.map(f => f.id === file.id ? { ...f, status: 'error', error: errorMessage, extractedData: undefined } : f)
+                );
+            }
+        }
+
+        setIsLoading(false);
     };
 
     const handleUseExampleFile = () => {
@@ -129,6 +188,14 @@ function App() {
         setPrompt(template.prompt);
     };
 
+    const handleViewFile = (file: File) => {
+        setViewingFile(file);
+    };
+
+    const handleCloseViewer = () => {
+        setViewingFile(null);
+    };
+
     return (
         <div className="bg-slate-900 text-slate-300 min-h-screen font-sans">
             <header className="bg-slate-950/70 backdrop-blur-sm border-b border-slate-700/50 sticky top-0 z-10">
@@ -143,12 +210,18 @@ function App() {
                             </p>
                         </div>
                         <button
-                            onClick={() => setIsApiKeyModalOpen(true)}
-                            className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300 text-sm transition-colors"
-                            title="Configurar API Key"
+                            onClick={() => !isUsingEnvApiKey && setIsApiKeyModalOpen(true)}
+                            className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-colors ${
+                                isUsingEnvApiKey
+                                    ? 'bg-green-900/30 border-green-700/50 text-green-300 cursor-default'
+                                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300 cursor-pointer'
+                            }`}
+                            title={isUsingEnvApiKey ? "API Key configurada desde variables de entorno" : "Configurar API Key"}
                         >
                             <KeyIcon className="w-4 h-4" />
-                            <span className="hidden sm:inline">API Key</span>
+                            <span className="hidden sm:inline">
+                                {isUsingEnvApiKey ? 'API Key (ENV)' : 'API Key'}
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -166,6 +239,9 @@ function App() {
                             activeFileId={activeFileId}
                             onFileSelect={handleFileSelect}
                             onUseExample={handleUseExampleFile}
+                            onExtractAll={handleExtractAll}
+                            isLoading={isLoading}
+                            onViewFile={handleViewFile}
                         />
                     </div>
                     <div className="lg:col-span-5 h-full">
@@ -188,6 +264,11 @@ function App() {
             <ApiKeyModal
                 isOpen={isApiKeyModalOpen}
                 onClose={() => setIsApiKeyModalOpen(false)}
+            />
+
+            <PdfViewer
+                file={viewingFile}
+                onClose={handleCloseViewer}
             />
         </div>
     );
