@@ -41,14 +41,14 @@ export const SECTORS: SectorInfo[] = [
         description: 'Documentos médicos, historias clínicas',
         icon: '🏥',
         theme: {
-            primary: '#059669', // green-600 - más intenso y profesional
-            secondary: '#10b981', // green-500
-            accent: '#0284c7', // sky-600 - azul más visible
-            background: '#f8fafc', // slate-50 - fondo muy claro pero neutro
+            primary: '#047857', // green-700 - verde muy intenso
+            secondary: '#059669', // green-600
+            accent: '#0369a1', // sky-700 - azul intenso
+            background: '#ecfdf5', // green-50 con tinte verde suave pero visible
             cardBg: '#ffffff',
-            border: '#86efac', // green-300 - más visible
-            text: '#0f172a', // slate-900 - texto muy oscuro para contraste
-            textSecondary: '#475569', // slate-600 - gris oscuro para secundario
+            border: '#6ee7b7', // green-400 - borde verde brillante
+            text: '#064e3b', // green-900 - verde muy oscuro para contraste
+            textSecondary: '#065f46', // green-800 - verde oscuro para secundario
         },
         recommendedModel: 'gemini-2.5-pro',
         certifications: [
