@@ -214,10 +214,10 @@ function App() {
             }}
         >
             <header
-                className="backdrop-blur-sm border-b sticky top-0 z-10 transition-colors duration-500"
+                className="backdrop-blur-sm border-b sticky top-0 z-10 transition-colors duration-500 shadow-sm"
                 style={{
                     backgroundColor: isHealthMode ? '#ffffff' : 'rgba(2, 6, 23, 0.7)',
-                    borderBottomColor: isHealthMode ? currentTheme.border : 'rgba(51, 65, 85, 0.5)'
+                    borderBottomColor: isHealthMode ? '#d1fae5' : 'rgba(51, 65, 85, 0.5)'
                 }}
             >
                 <div className="px-4 sm:px-6 lg:px-8">
@@ -226,7 +226,7 @@ function App() {
                             <h1
                                 className="text-3xl font-bold font-orbitron tracking-wider transition-colors duration-500"
                                 style={{
-                                    color: isHealthMode ? currentTheme.primary : '#f1f5f9'
+                                    color: isHealthMode ? '#059669' : '#f1f5f9'
                                 }}
                             >
                                 verbadoc
@@ -234,18 +234,18 @@ function App() {
                             <p
                                 className="text-sm font-sans transition-colors duration-500"
                                 style={{
-                                    color: isHealthMode ? currentTheme.textSecondary : '#94a3b8'
+                                    color: isHealthMode ? '#0f172a' : '#94a3b8'
                                 }}
                             >
-                                trabajando para {isHealthMode && <span className="font-medium">🏥 Sector Salud</span>}
+                                trabajando para {isHealthMode && <span className="font-semibold text-green-600">🏥 Sector Salud</span>}
                             </p>
                         </div>
                         <button
                             onClick={() => setIsHelpModalOpen(true)}
-                            className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-all duration-500"
+                            className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-all duration-500 font-medium shadow-sm hover:shadow-md"
                             style={{
-                                backgroundColor: isHealthMode ? currentTheme.primary : '#0891b2',
-                                borderColor: isHealthMode ? currentTheme.secondary : '#06b6d4',
+                                backgroundColor: isHealthMode ? '#059669' : '#0891b2',
+                                borderColor: isHealthMode ? '#10b981' : '#06b6d4',
                                 color: '#ffffff'
                             }}
                             title="Ayuda y Guía de Usuario"
