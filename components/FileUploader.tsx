@@ -131,7 +131,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, act
                 onDragOver={onDragOver}
                 onDrop={onDrop}
                 onClick={() => fileInputRef.current?.click()}
-                                className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragging ? 'border-cyan-400 bg-slate-700/50' : 'border-slate-600 hover:border-slate-500'}`}            >
+                className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragging ? 'border-cyan-400 bg-slate-700/50' : 'border-slate-600 hover:border-slate-500'}`}
+            >
                 <input
                     ref={fileInputRef}
                     type="file"
@@ -170,7 +171,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, act
                                 <li key={f.id}>
                                     <button 
                                         onClick={() => onFileSelect(f.id)}
-                                                                                className={`w-full text-left p-2 rounded-md transition-all duration-200 border-l-4 ${activeFileId === f.id ? 'bg-cyan-900/50 border-cyan-400' : 'bg-slate-700/30 border-transparent hover:bg-slate-700/60'}`}                                    >
+                                        className={`w-full text-left p-2 rounded-md transition-all duration-200 border-l-4 ${activeFileId === f.id ? 'bg-cyan-900/50 border-cyan-400' : 'bg-slate-700/30 border-transparent hover:bg-slate-700/60'}`}
+                                    >
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <FileIcon className="w-6 h-6 text-slate-400 flex-shrink-0" />
