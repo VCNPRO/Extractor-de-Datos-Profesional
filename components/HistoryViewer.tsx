@@ -76,10 +76,10 @@ export const HistoryViewer: React.FC<HistoryViewerProps> = ({ history, onReplay,
                             <div
                                 className="mt-3 p-3 rounded-md max-h-60 overflow-y-auto transition-colors duration-500"
                                 style={{
-                                    backgroundColor: isHealthMode ? '#f0fdf4' : 'rgba(15, 23, 42, 0.5)',
+                                    backgroundColor: isHealthMode ? '#f9fafb' : 'rgba(15, 23, 42, 0.5)',
                                     borderWidth: '1px',
                                     borderStyle: 'solid',
-                                    borderColor: isHealthMode ? '#6ee7b7' : '#475569'
+                                    borderColor: isHealthMode ? '#e5e7eb' : '#475569'
                                 }}
                             >
                                 <JsonViewer data={item.extractedData} />

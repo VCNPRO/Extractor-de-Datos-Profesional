@@ -272,8 +272,8 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                 onClick={() => onSelectTemplate(template)}
                 className="w-full text-left p-3 border rounded-lg transition-all group hover:shadow-md"
                 style={{
-                    backgroundColor: isHealthMode ? '#f0fdf4' : 'rgba(30, 41, 59, 0.5)',
-                    borderColor: isHealthMode ? '#6ee7b7' : '#475569'
+                    backgroundColor: isHealthMode ? '#ffffff' : 'rgba(30, 41, 59, 0.5)',
+                    borderColor: isHealthMode ? '#d1d5db' : '#475569'
                 }}
             >
                 <div className="flex items-start gap-3">
@@ -484,9 +484,9 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                             onClick={() => setShowSaveDialog(true)}
                             className="w-full mb-3 p-3 border-2 rounded-lg transition-all flex items-center justify-center gap-2 font-bold hover:opacity-90"
                             style={{
-                                backgroundColor: isHealthMode ? '#d1fae5' : 'rgba(147, 51, 234, 0.2)',
-                                borderColor: isHealthMode ? '#6ee7b7' : 'rgba(168, 85, 247, 0.5)',
-                                color: isHealthMode ? '#047857' : '#e9d5ff'
+                                backgroundColor: isHealthMode ? '#f3e8ff' : 'rgba(147, 51, 234, 0.2)',
+                                borderColor: isHealthMode ? '#c084fc' : 'rgba(168, 85, 247, 0.5)',
+                                color: isHealthMode ? '#7c3aed' : '#e9d5ff'
                             }}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
