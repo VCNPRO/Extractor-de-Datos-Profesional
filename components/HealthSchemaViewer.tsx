@@ -53,6 +53,27 @@ const FieldRenderer: React.FC<{ seccion: Section, campo: Field, onUpdate: (secti
           <p className="text-xs text-gray-400 mt-1">{campo.tipo_dato}</p>
         </div>
       );
+    case 'tabla':
+      return (
+        <div className="p-3 bg-slate-700/30 rounded-md">
+          <p className="font-semibold">{campo.etiqueta}</p>
+          <table className="w-full mt-2 text-sm text-left text-gray-400">
+            <thead className="text-xs text-gray-300 uppercase bg-slate-800">
+              <tr>
+                {campo.estructura_filas && Object.values(campo.estructura_filas)[0].columnas.map(columna => (
+                  <th key={columna.nombre} scope="col" className="px-4 py-2">
+                    {columna.etiqueta}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {/* Table body will be rendered here when we have data */}
+            </tbody>
+          </table>
+          <p className="text-xs text-gray-400 mt-1">{campo.tipo_dato}</p>
+        </div>
+      );
     default:
       return (
         <div className="p-3 bg-slate-700/30 rounded-md">
