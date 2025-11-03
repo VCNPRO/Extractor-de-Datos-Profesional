@@ -7,7 +7,7 @@ import { ExtractionEditor } from './components/ExtractionEditor.tsx';
 // Fix: Use explicit file extension in import.
 import { HistoryViewer } from './components/HistoryViewer.tsx';
 // Fix: Use explicit file extension in import.
-import { TemplatesPanel, type Template } from './components/TemplatesPanel.tsx';
+import { TemplatesPanel } from './components/TemplatesPanel.tsx';
 // Fix: Use explicit file extension in import.
 import { PdfViewer } from './components/PdfViewer.tsx';
 // Fix: Use explicit file extension in import.
@@ -182,12 +182,40 @@ function App() {
         }
     };
 
-    const handleSelectTemplate = (template: Template) => {
-        // Apply template schema and prompt
-        setSchema(JSON.parse(JSON.stringify(template.schema))); // Deep copy schema
-        setPrompt(template.prompt);
+    const handleSelectTemplate = (template: any) => {
+        const isHealthTemplate = 'secciones' in template;
 
-        // Cambiar al sector de la plantilla si está definido
+        if (isHealthTemplate) {
+            const newSchema: SchemaField[] = template.secciones.flatMap((seccion: any) =>
+                seccion.campos.map((campo: any) => {
+                    let type: SchemaFieldType = 'STRING';
+                    switch (campo.tipo_dato) {
+                        case 'numero':
+                            type = 'NUMBER';
+                            break;
+                        case 'multiseleccion':
+                            type = 'ARRAY_OF_STRINGS';
+                            break;
+                        case 'tabla':
+                            type = 'ARRAY_OF_OBJECTS';
+                            break;
+                        default:
+                            type = 'STRING';
+                    }
+                    return {
+                        id: `field-${campo.nombre_campo}-${Date.now()}`,
+                        name: campo.etiqueta,
+                        type: type,
+                    };
+                })
+            );
+            setSchema(newSchema);
+            setPrompt('Extrae la información clave del siguiente documento de salud.');
+        } else {
+            setSchema(JSON.parse(JSON.stringify(template.schema)));
+            setPrompt(template.prompt);
+        }
+
         if (template.sector) {
             setCurrentSector(template.sector);
         }

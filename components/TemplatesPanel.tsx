@@ -17,7 +17,7 @@ export interface Template {
 }
 
 interface TemplatesPanelProps {
-    onSelectTemplate: (template: Template) => void;
+    onSelectTemplate: (template: any) => void;
     onSaveTemplate?: (name: string, description: string) => void;
     currentSchema?: SchemaField[];
     currentPrompt?: string;
@@ -27,7 +27,7 @@ interface TemplatesPanelProps {
     isHealthMode?: boolean;
 }
 
-const defaultTemplates: Template[] = [
+const defaultTemplates: any[] = [
     // Contabilidad
     {
         id: 'factura-basica',
@@ -118,60 +118,62 @@ const defaultTemplates: Template[] = [
     },
     // Salud
     {
-        id: 'historia-clinica',
-        name: 'Historia Clínica',
-        description: 'Extrae datos de historias clínicas',
-        type: 'nota',
-        icon: 'document',
-        sector: 'salud',
-        schema: [
-            { id: 'field-1', name: 'nombre_paciente', type: 'STRING' },
-            { id: 'field-2', name: 'numero_historia', type: 'STRING' },
-            { id: 'field-3', name: 'fecha_consulta', type: 'STRING' },
-            { id: 'field-4', name: 'diagnostico', type: 'STRING' },
-            { id: 'field-5', name: 'tratamiento', type: 'STRING' },
-            { id: 'field-6', name: 'medicamentos', type: 'ARRAY_OF_STRINGS' }
+        id: 'template_001_hc_completa',
+        nombre: 'Historia Clínica Completa',
+        descripcion: 'Formato completo de Historia Clínica según normas internacionales HL7',
+        categoria: 'historia_clinica_completa',
+        tipo: 'predefinida',
+        version: '1.0.0',
+        estandares_aplicados: ['HL7_v2', 'FHIR_R4'],
+        metadatos: {
+          departamento: 'Todos',
+          nivel_complejidad: 'avanzada',
+          requiere_firma_digital: true,
+          confidencialidad_nivel: 'altamente_confidencial',
+        },
+        secciones: [
+          {
+            id: 'seccion_001',
+            nombre: 'Datos de Filiación',
+            descripcion: 'Identificación del paciente y datos de contacto',
+            orden: 1,
+            obligatoria: true,
+            campos: [
+              {
+                nombre_campo: 'nombre_completo',
+                etiqueta: 'Nombre Completo',
+                tipo_dato: 'texto',
+                orden: 1,
+                obligatorio: true,
+                mapeo_estandares: {
+                  hl7_field: 'PID-5',
+                  fhir_path: 'Patient.name.text',
+                },
+                validaciones: {
+                  longitud_minima: 5,
+                  longitud_maxima: 100,
+                  patron_regex: '^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$',
+                },
+                configuracion_extraccion: {
+                  buscar_automaticamente: true,
+                  metodo_extraccion: ['ocr', 'nlp'],
+                },
+                security: {
+                  is_phi: true,
+                  phi_sensitivity: 'muy_alta',
+                  hipaa_identifier: true,
+                },
+              },
+            ],
+          },
         ],
-        prompt: 'Extrae los datos de la historia clínica: nombre del paciente, número de historia, fecha, diagnóstico, tratamiento y medicamentos prescritos.'
-    },
-    {
-        id: 'orden-medica',
-        name: 'Orden Médica',
-        description: 'Extrae datos de órdenes médicas',
-        type: 'nota',
-        icon: 'document',
         sector: 'salud',
-        schema: [
-            { id: 'field-1', name: 'paciente', type: 'STRING' },
-            { id: 'field-2', name: 'medico', type: 'STRING' },
-            { id: 'field-3', name: 'fecha', type: 'STRING' },
-            { id: 'field-4', name: 'tipo_orden', type: 'STRING' },
-            { id: 'field-5', name: 'examenes_solicitados', type: 'ARRAY_OF_STRINGS' },
-            { id: 'field-6', name: 'indicaciones', type: 'STRING' }
-        ],
-        prompt: 'Extrae los datos de la orden médica: paciente, médico, fecha, tipo de orden, exámenes solicitados e indicaciones.'
-    },
-    {
-        id: 'resultado-laboratorio',
-        name: 'Resultado de Laboratorio',
-        description: 'Extrae resultados de análisis clínicos',
-        type: 'nota',
-        icon: 'document',
-        sector: 'salud',
-        schema: [
-            { id: 'field-1', name: 'paciente', type: 'STRING' },
-            { id: 'field-2', name: 'fecha_muestra', type: 'STRING' },
-            { id: 'field-3', name: 'fecha_resultado', type: 'STRING' },
-            { id: 'field-4', name: 'tipo_analisis', type: 'STRING' },
-            { id: 'field-5', name: 'resultados', type: 'STRING' },
-            { id: 'field-6', name: 'valores_referencia', type: 'STRING' }
-        ],
-        prompt: 'Extrae los datos del resultado de laboratorio: paciente, fechas, tipo de análisis, resultados y valores de referencia.'
-    }
+        icon: 'document'
+      }
 ];
 
 export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema, currentPrompt, onSectorChange, currentSector, theme, isHealthMode }: TemplatesPanelProps) {
-    const [customTemplates, setCustomTemplates] = useState<Template[]>([]);
+    const [customTemplates, setCustomTemplates] = useState<any[]>([]);
     const [showSaveDialog, setShowSaveDialog] = useState(false);
     const [newTemplateName, setNewTemplateName] = useState('');
     const [newTemplateDescription, setNewTemplateDescription] = useState('');
@@ -203,7 +205,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
     const handleSaveTemplate = () => {
         if (!newTemplateName.trim() || !currentSchema || !currentPrompt) return;
 
-        const newTemplate: Template = {
+        const newTemplate: any = {
             id: `custom-${Date.now()}`,
             name: newTemplateName.trim(),
             description: newTemplateDescription.trim() || 'Plantilla personalizada',
@@ -266,69 +268,73 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
         }
     };
 
-    const TemplateCard = ({ template, showActions = false }: { template: Template, showActions?: boolean }) => (
-        <div className="relative group/card">
-            <button
-                onClick={() => onSelectTemplate(template)}
-                className="w-full text-left p-3 border rounded-lg transition-all group hover:shadow-md"
-                style={{
-                    backgroundColor: isHealthMode ? '#ffffff' : 'rgba(30, 41, 59, 0.5)',
-                    borderColor: isHealthMode ? '#d1d5db' : '#475569'
-                }}
-            >
-                <div className="flex items-start gap-3">
-                    <div
-                        className="mt-0.5 transition-colors"
-                        style={{ color: isHealthMode ? accentColor : '#60a5fa' }}
-                    >
-                        {renderIcon(template.icon)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <h4
-                            className="text-sm font-semibold transition-colors"
-                            style={{ color: textColor }}
+    const TemplateCard = ({ template, showActions = false }: { template: any, showActions?: boolean }) => {
+        const isHealthTemplate = 'secciones' in template;
+
+        return (
+            <div className="relative group/card">
+                <button
+                    onClick={() => onSelectTemplate(template)}
+                    className="w-full text-left p-3 border rounded-lg transition-all group hover:shadow-md"
+                    style={{
+                        backgroundColor: isHealthMode ? '#ffffff' : 'rgba(30, 41, 59, 0.5)',
+                        borderColor: isHealthMode ? '#d1d5db' : '#475569'
+                    }}
+                >
+                    <div className="flex items-start gap-3">
+                        <div
+                            className="mt-0.5 transition-colors"
+                            style={{ color: isHealthMode ? accentColor : '#60a5fa' }}
                         >
-                            {template.name} {template.archived && <span className="text-xs opacity-50">(Archivada)</span>}
-                        </h4>
-                        <p
-                            className="text-xs mt-0.5 line-clamp-2 transition-colors"
-                            style={{ color: textSecondary }}
-                        >
-                            {template.description}
-                        </p>
+                            {renderIcon(isHealthTemplate ? 'document' : template.icon)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h4
+                                className="text-sm font-semibold transition-colors"
+                                style={{ color: textColor }}
+                            >
+                                {isHealthTemplate ? template.nombre : template.name} {template.archived && <span className="text-xs opacity-50">(Archivada)</span>}
+                            </h4>
+                            <p
+                                className="text-xs mt-0.5 line-clamp-2 transition-colors"
+                                style={{ color: textSecondary }}
+                            >
+                                {template.description || (isHealthTemplate && template.descripcion)}
+                            </p>
+                        </div>
                     </div>
-                </div>
-            </button>
-            {showActions && (
-                <div className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-opacity flex gap-1">
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleArchiveTemplate(template.id);
-                        }}
-                        className="p-1 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 hover:text-white transition-colors"
-                        title={template.archived ? "Desarchivar" : "Archivar"}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                        </svg>
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteTemplate(template.id);
-                        }}
-                        className="p-1 bg-red-700 hover:bg-red-600 rounded text-white transition-colors"
-                        title="Eliminar"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
-                </div>
-            )}
-        </div>
-    );
+                </button>
+                {showActions && (
+                    <div className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-opacity flex gap-1">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleArchiveTemplate(template.id);
+                            }}
+                            className="p-1 bg-slate-700 hover:bg-slate-600 rounded text-slate-300 hover:text-white transition-colors"
+                            title={template.archived ? "Desarchivar" : "Archivar"}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTemplate(template.id);
+                            }}
+                            className="p-1 bg-red-700 hover:bg-red-600 rounded text-white transition-colors"
+                            title="Eliminar"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     const cardBg = isHealthMode ? '#ffffff' : 'rgba(30, 41, 59, 0.3)';
     const borderColor = isHealthMode ? theme?.border || '#6ee7b7' : 'rgba(51, 65, 85, 0.5)';
