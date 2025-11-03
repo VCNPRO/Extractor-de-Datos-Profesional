@@ -13,6 +13,8 @@ interface FileUploaderProps {
     onExtractAll?: () => void;
     isLoading?: boolean;
     onViewFile?: (file: File) => void;
+    theme?: any;
+    isHealthMode?: boolean;
 }
 
 const formatBytes = (bytes: number, decimals = 2): string => {
@@ -37,7 +39,12 @@ const StatusIndicator: React.FC<{ status: UploadedFile['status'] }> = ({ status 
     }
 }
 
-export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, activeFileId, onFileSelect, onUseExample, onExtractAll, isLoading, onViewFile }) => {
+export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, activeFileId, onFileSelect, onUseExample, onExtractAll, isLoading, onViewFile, theme, isHealthMode }) => {
+    const cardBg = isHealthMode ? '#ffffff' : 'rgba(30, 41, 59, 0.5)';
+    const borderColor = isHealthMode ? theme?.border || '#6ee7b7' : 'rgba(51, 65, 85, 0.5)';
+    const textColor = isHealthMode ? theme?.text || '#064e3b' : '#f1f5f9';
+    const textSecondary = isHealthMode ? theme?.textSecondary || '#065f46' : '#94a3b8';
+    const accentColor = isHealthMode ? theme?.primary || '#047857' : '#06b6d4';
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -97,14 +104,21 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, act
     }
     
     return (
-        <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4 md:p-6 flex flex-col h-full">
+        <div
+            className="rounded-lg border p-4 md:p-6 flex flex-col h-full transition-colors duration-500"
+            style={{
+                backgroundColor: cardBg,
+                borderColor: borderColor
+            }}
+        >
             <div className="flex justify-between items-center mb-3">
-                <h2 className="text-lg font-semibold text-slate-100">
+                <h2 className="text-lg font-semibold transition-colors duration-500" style={{ color: textColor }}>
                     Lote de Documentos
                 </h2>
                 <button
                     onClick={onUseExample}
-                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+                    className="text-sm hover:opacity-80 transition-all flex items-center gap-1 font-medium"
+                    style={{ color: accentColor }}
                 >
                     <SparklesIcon className="w-4 h-4" />
                     Usar Ejemplo
