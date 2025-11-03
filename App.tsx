@@ -13,8 +13,9 @@ import { PdfViewer } from './components/PdfViewer.tsx';
 // Fix: Use explicit file extension in import.
 import { HelpModal } from './components/HelpModal.tsx';
 // Fix: Use explicit file extension in import.
-import type { UploadedFile, ExtractionResult, SchemaField } from './types.ts';
+import type { UploadedFile, ExtractionResult, SchemaField, Sector } from './types.ts';
 import { setApiKey } from './services/geminiService.ts';
+import { getSectorById, getDefaultTheme } from './utils/sectorsConfig.ts';
 
 // Helper to create a dummy file for the example
 function createExampleFile(): File {
@@ -41,10 +42,20 @@ function App() {
     const [viewingFile, setViewingFile] = useState<File | null>(null);
     const [apiKeyError, setApiKeyError] = useState<boolean>(false);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
+    const [currentSector, setCurrentSector] = useState<Sector>('general');
 
     // State for the editor, which can be reused across different files
     const [prompt, setPrompt] = useState<string>('Extrae la información clave del siguiente documento según el esquema JSON proporcionado.');
     const [schema, setSchema] = useState<SchemaField[]>([{ id: `field-${Date.now()}`, name: '', type: 'STRING' }]);
+
+    // Obtener el tema basado en el sector actual
+    const currentTheme = useMemo(() => {
+        const sectorInfo = getSectorById(currentSector);
+        return sectorInfo?.theme || getDefaultTheme();
+    }, [currentSector]);
+
+    // Determinar si estamos en modo salud
+    const isHealthMode = currentSector === 'salud';
 
     // Set API key from environment variables on mount
     useEffect(() => {
@@ -175,6 +186,15 @@ function App() {
         // Apply template schema and prompt
         setSchema(JSON.parse(JSON.stringify(template.schema))); // Deep copy schema
         setPrompt(template.prompt);
+
+        // Cambiar al sector de la plantilla si está definido
+        if (template.sector) {
+            setCurrentSector(template.sector);
+        }
+    };
+
+    const handleSectorChange = (sector: Sector) => {
+        setCurrentSector(sector);
     };
 
     const handleViewFile = (file: File) => {
@@ -186,21 +206,48 @@ function App() {
     };
 
     return (
-        <div className="bg-slate-900 text-slate-300 min-h-screen font-sans">
-            <header className="bg-slate-950/70 backdrop-blur-sm border-b border-slate-700/50 sticky top-0 z-10">
+        <div
+            className="min-h-screen font-sans transition-colors duration-500"
+            style={{
+                backgroundColor: isHealthMode ? currentTheme.background : '#0f172a',
+                color: isHealthMode ? currentTheme.text : '#e2e8f0'
+            }}
+        >
+            <header
+                className="backdrop-blur-sm border-b sticky top-0 z-10 transition-colors duration-500"
+                style={{
+                    backgroundColor: isHealthMode ? '#ffffff' : 'rgba(2, 6, 23, 0.7)',
+                    borderBottomColor: isHealthMode ? currentTheme.border : 'rgba(51, 65, 85, 0.5)'
+                }}
+            >
                 <div className="px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         <div className="flex items-baseline gap-3">
-                            <h1 className="text-3xl font-bold text-slate-100 font-orbitron tracking-wider">
+                            <h1
+                                className="text-3xl font-bold font-orbitron tracking-wider transition-colors duration-500"
+                                style={{
+                                    color: isHealthMode ? currentTheme.primary : '#f1f5f9'
+                                }}
+                            >
                                 verbadoc
                             </h1>
-                            <p className="text-sm text-slate-400 font-sans">
-                                trabajando para
+                            <p
+                                className="text-sm font-sans transition-colors duration-500"
+                                style={{
+                                    color: isHealthMode ? currentTheme.textSecondary : '#94a3b8'
+                                }}
+                            >
+                                trabajando para {isHealthMode && <span className="font-medium">🏥 Sector Salud</span>}
                             </p>
                         </div>
                         <button
                             onClick={() => setIsHelpModalOpen(true)}
-                            className="flex items-center gap-2 px-3 py-2 bg-cyan-600 hover:bg-cyan-700 border border-cyan-500 rounded-lg text-white text-sm transition-colors"
+                            className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm transition-all duration-500"
+                            style={{
+                                backgroundColor: isHealthMode ? currentTheme.primary : '#0891b2',
+                                borderColor: isHealthMode ? currentTheme.secondary : '#06b6d4',
+                                color: '#ffffff'
+                            }}
                             title="Ayuda y Guía de Usuario"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -246,6 +293,8 @@ function App() {
                             onSelectTemplate={handleSelectTemplate}
                             currentSchema={schema}
                             currentPrompt={prompt}
+                            onSectorChange={handleSectorChange}
+                            currentSector={currentSector}
                         />
                     </div>
                     <div className="lg:col-span-3 h-full">

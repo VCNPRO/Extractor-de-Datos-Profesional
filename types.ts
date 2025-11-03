@@ -27,3 +27,24 @@ export interface ExtractionResult {
     extractedData: object;
     timestamp: string;
 }
+
+export type Sector = 'contabilidad' | 'finanzas' | 'marketing' | 'legal' | 'salud' | 'general';
+
+export interface SectorInfo {
+    id: Sector;
+    name: string;
+    description: string;
+    icon: string;
+    theme?: {
+        primary: string;
+        secondary: string;
+        accent: string;
+        background: string;
+        cardBg: string;
+        border: string;
+        text: string;
+        textSecondary: string;
+    };
+    recommendedModel?: 'gemini-2.5-flash' | 'gemini-2.5-pro';
+    certifications?: string[];
+}

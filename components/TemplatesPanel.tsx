@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileTextIcon, ReceiptIcon, FileIcon } from './Icons.tsx';
-import type { SchemaField } from '../types.ts';
+import type { SchemaField, Sector } from '../types.ts';
+import { SECTORS, getSectorById } from '../utils/sectorsConfig.ts';
 
 export interface Template {
     id: string;
@@ -12,6 +13,7 @@ export interface Template {
     prompt: string;
     archived?: boolean;
     custom?: boolean;
+    sector?: Sector;
 }
 
 interface TemplatesPanelProps {
@@ -19,20 +21,24 @@ interface TemplatesPanelProps {
     onSaveTemplate?: (name: string, description: string) => void;
     currentSchema?: SchemaField[];
     currentPrompt?: string;
+    onSectorChange?: (sector: Sector) => void;
+    currentSector?: Sector;
 }
 
 const defaultTemplates: Template[] = [
+    // Contabilidad
     {
         id: 'factura-basica',
         name: 'Factura Básica',
         description: 'Extrae datos básicos de facturas',
         type: 'factura',
         icon: 'receipt',
+        sector: 'contabilidad',
         schema: [
             { id: 'field-1', name: 'cliente', type: 'STRING' },
             { id: 'field-2', name: 'fecha', type: 'STRING' },
             { id: 'field-3', name: 'total', type: 'NUMBER' },
-            { id: 'field-4', name: 'items', type: 'ARRAY' }
+            { id: 'field-4', name: 'items', type: 'ARRAY_OF_STRINGS' }
         ],
         prompt: 'Extrae la información de la factura: cliente, fecha, total e items.'
     },
@@ -42,6 +48,7 @@ const defaultTemplates: Template[] = [
         description: 'Extracción detallada de facturas',
         type: 'factura',
         icon: 'receipt',
+        sector: 'contabilidad',
         schema: [
             { id: 'field-1', name: 'numero_factura', type: 'STRING' },
             { id: 'field-2', name: 'cliente', type: 'STRING' },
@@ -49,48 +56,126 @@ const defaultTemplates: Template[] = [
             { id: 'field-4', name: 'subtotal', type: 'NUMBER' },
             { id: 'field-5', name: 'impuestos', type: 'NUMBER' },
             { id: 'field-6', name: 'total', type: 'NUMBER' },
-            { id: 'field-7', name: 'items', type: 'ARRAY' }
+            { id: 'field-7', name: 'items', type: 'ARRAY_OF_STRINGS' }
         ],
         prompt: 'Extrae todos los detalles de la factura incluyendo número, cliente, fecha, subtotal, impuestos, total e items detallados.'
     },
+    // Finanzas
     {
-        id: 'nota-entrega',
-        name: 'Nota de Entrega',
-        description: 'Extrae datos de notas de entrega',
+        id: 'estado-financiero',
+        name: 'Estado Financiero',
+        description: 'Extrae datos de estados financieros',
         type: 'nota',
         icon: 'document',
+        sector: 'finanzas',
         schema: [
-            { id: 'field-1', name: 'numero_nota', type: 'STRING' },
-            { id: 'field-2', name: 'destinatario', type: 'STRING' },
-            { id: 'field-3', name: 'fecha_entrega', type: 'STRING' },
-            { id: 'field-4', name: 'productos', type: 'ARRAY' },
-            { id: 'field-5', name: 'cantidad_total', type: 'NUMBER' }
+            { id: 'field-1', name: 'periodo', type: 'STRING' },
+            { id: 'field-2', name: 'ingresos_totales', type: 'NUMBER' },
+            { id: 'field-3', name: 'gastos_totales', type: 'NUMBER' },
+            { id: 'field-4', name: 'resultado_neto', type: 'NUMBER' },
+            { id: 'field-5', name: 'detalles', type: 'STRING' }
         ],
-        prompt: 'Extrae la información de la nota de entrega: número, destinatario, fecha, productos y cantidad total.'
+        prompt: 'Extrae los datos del estado financiero: periodo, ingresos totales, gastos totales, resultado neto y detalles relevantes.'
+    },
+    // Marketing
+    {
+        id: 'reporte-campana',
+        name: 'Reporte de Campaña',
+        description: 'Métricas de campañas de marketing',
+        type: 'nota',
+        icon: 'document',
+        sector: 'marketing',
+        schema: [
+            { id: 'field-1', name: 'nombre_campana', type: 'STRING' },
+            { id: 'field-2', name: 'fecha_inicio', type: 'STRING' },
+            { id: 'field-3', name: 'fecha_fin', type: 'STRING' },
+            { id: 'field-4', name: 'impresiones', type: 'NUMBER' },
+            { id: 'field-5', name: 'clics', type: 'NUMBER' },
+            { id: 'field-6', name: 'conversiones', type: 'NUMBER' },
+            { id: 'field-7', name: 'roi', type: 'NUMBER' }
+        ],
+        prompt: 'Extrae las métricas de la campaña: nombre, fechas, impresiones, clics, conversiones y ROI.'
+    },
+    // Legal
+    {
+        id: 'contrato',
+        name: 'Contrato Legal',
+        description: 'Extrae datos clave de contratos',
+        type: 'nota',
+        icon: 'document',
+        sector: 'legal',
+        schema: [
+            { id: 'field-1', name: 'tipo_contrato', type: 'STRING' },
+            { id: 'field-2', name: 'partes', type: 'ARRAY_OF_STRINGS' },
+            { id: 'field-3', name: 'fecha_firma', type: 'STRING' },
+            { id: 'field-4', name: 'vigencia', type: 'STRING' },
+            { id: 'field-5', name: 'monto', type: 'STRING' },
+            { id: 'field-6', name: 'clausulas_principales', type: 'ARRAY_OF_STRINGS' }
+        ],
+        prompt: 'Extrae los datos del contrato: tipo, partes involucradas, fecha de firma, vigencia, monto y cláusulas principales.'
+    },
+    // Salud
+    {
+        id: 'historia-clinica',
+        name: 'Historia Clínica',
+        description: 'Extrae datos de historias clínicas',
+        type: 'nota',
+        icon: 'document',
+        sector: 'salud',
+        schema: [
+            { id: 'field-1', name: 'nombre_paciente', type: 'STRING' },
+            { id: 'field-2', name: 'numero_historia', type: 'STRING' },
+            { id: 'field-3', name: 'fecha_consulta', type: 'STRING' },
+            { id: 'field-4', name: 'diagnostico', type: 'STRING' },
+            { id: 'field-5', name: 'tratamiento', type: 'STRING' },
+            { id: 'field-6', name: 'medicamentos', type: 'ARRAY_OF_STRINGS' }
+        ],
+        prompt: 'Extrae los datos de la historia clínica: nombre del paciente, número de historia, fecha, diagnóstico, tratamiento y medicamentos prescritos.'
     },
     {
-        id: 'nota-credito',
-        name: 'Nota de Crédito',
-        description: 'Extrae datos de notas de crédito',
+        id: 'orden-medica',
+        name: 'Orden Médica',
+        description: 'Extrae datos de órdenes médicas',
         type: 'nota',
         icon: 'document',
+        sector: 'salud',
         schema: [
-            { id: 'field-1', name: 'numero_nota', type: 'STRING' },
-            { id: 'field-2', name: 'factura_referencia', type: 'STRING' },
+            { id: 'field-1', name: 'paciente', type: 'STRING' },
+            { id: 'field-2', name: 'medico', type: 'STRING' },
             { id: 'field-3', name: 'fecha', type: 'STRING' },
-            { id: 'field-4', name: 'monto_credito', type: 'NUMBER' },
-            { id: 'field-5', name: 'motivo', type: 'STRING' }
+            { id: 'field-4', name: 'tipo_orden', type: 'STRING' },
+            { id: 'field-5', name: 'examenes_solicitados', type: 'ARRAY_OF_STRINGS' },
+            { id: 'field-6', name: 'indicaciones', type: 'STRING' }
         ],
-        prompt: 'Extrae los datos de la nota de crédito: número, factura de referencia, fecha, monto y motivo.'
+        prompt: 'Extrae los datos de la orden médica: paciente, médico, fecha, tipo de orden, exámenes solicitados e indicaciones.'
+    },
+    {
+        id: 'resultado-laboratorio',
+        name: 'Resultado de Laboratorio',
+        description: 'Extrae resultados de análisis clínicos',
+        type: 'nota',
+        icon: 'document',
+        sector: 'salud',
+        schema: [
+            { id: 'field-1', name: 'paciente', type: 'STRING' },
+            { id: 'field-2', name: 'fecha_muestra', type: 'STRING' },
+            { id: 'field-3', name: 'fecha_resultado', type: 'STRING' },
+            { id: 'field-4', name: 'tipo_analisis', type: 'STRING' },
+            { id: 'field-5', name: 'resultados', type: 'STRING' },
+            { id: 'field-6', name: 'valores_referencia', type: 'STRING' }
+        ],
+        prompt: 'Extrae los datos del resultado de laboratorio: paciente, fechas, tipo de análisis, resultados y valores de referencia.'
     }
 ];
 
-export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema, currentPrompt }: TemplatesPanelProps) {
+export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema, currentPrompt, onSectorChange, currentSector }: TemplatesPanelProps) {
     const [customTemplates, setCustomTemplates] = useState<Template[]>([]);
     const [showSaveDialog, setShowSaveDialog] = useState(false);
     const [newTemplateName, setNewTemplateName] = useState('');
     const [newTemplateDescription, setNewTemplateDescription] = useState('');
     const [showArchived, setShowArchived] = useState(false);
+    const [selectedSector, setSelectedSector] = useState<Sector>(currentSector || 'general');
+    const [showCertificationsModal, setShowCertificationsModal] = useState(false);
 
     // Load custom templates from localStorage
     useEffect(() => {
@@ -149,9 +234,20 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
         }
     };
 
-    const facturas = defaultTemplates.filter(t => t.type === 'factura');
-    const notas = defaultTemplates.filter(t => t.type === 'nota');
+    const handleSectorChange = (sector: Sector) => {
+        setSelectedSector(sector);
+        if (onSectorChange) {
+            onSectorChange(sector);
+        }
+    };
+
+    // Filtrar plantillas por sector seleccionado
+    const filteredTemplates = selectedSector === 'general'
+        ? defaultTemplates
+        : defaultTemplates.filter(t => t.sector === selectedSector);
+
     const activeCustomTemplates = customTemplates.filter(t => showArchived || !t.archived);
+    const currentSectorInfo = getSectorById(selectedSector);
 
     const renderIcon = (iconType: Template['icon']) => {
         switch (iconType) {
@@ -222,32 +318,70 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                 <p className="text-xs text-slate-400 mt-1">Modelos y plantillas predefinidas</p>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                {/* Facturas */}
-                <div>
-                    <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
-                        <ReceiptIcon className="w-4 h-4 text-blue-400" />
-                        Facturas
-                    </h3>
-                    <div className="space-y-2">
-                        {facturas.map(template => (
-                            <TemplateCard key={template.id} template={template} />
-                        ))}
-                    </div>
-                </div>
+            {/* Selector de Sectores */}
+            <div className="p-4 border-b border-slate-700/50 bg-slate-900/50">
+                <label htmlFor="sector-select" className="block text-sm font-medium text-slate-300 mb-2">
+                    Filtrar por Sector
+                </label>
+                <select
+                    id="sector-select"
+                    value={selectedSector}
+                    onChange={(e) => handleSectorChange(e.target.value as Sector)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-md p-2 text-sm text-slate-200"
+                >
+                    {SECTORS.map(sector => (
+                        <option key={sector.id} value={sector.id}>
+                            {sector.icon} {sector.name}
+                        </option>
+                    ))}
+                </select>
+                {currentSectorInfo?.description && (
+                    <p className="text-xs text-slate-400 mt-1">{currentSectorInfo.description}</p>
+                )}
 
-                {/* Notas */}
-                <div>
-                    <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
-                        <FileTextIcon className="w-4 h-4 text-green-400" />
-                        Notas
-                    </h3>
-                    <div className="space-y-2">
-                        {notas.map(template => (
-                            <TemplateCard key={template.id} template={template} />
-                        ))}
+                {/* Mostrar info de certificaciones para sector Salud */}
+                {selectedSector === 'salud' && currentSectorInfo?.certifications && (
+                    <button
+                        onClick={() => setShowCertificationsModal(true)}
+                        className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 bg-green-600/20 hover:bg-green-600/30 border border-green-500/50 rounded-md transition-colors text-xs text-green-300"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Ver Certificaciones HIPAA
+                    </button>
+                )}
+
+                {/* Modelo recomendado */}
+                {currentSectorInfo?.recommendedModel && (
+                    <div className="mt-3 p-2 bg-blue-600/10 border border-blue-500/30 rounded text-xs">
+                        <p className="text-blue-300 font-medium">Modelo recomendado:</p>
+                        <p className="text-blue-200 mt-0.5">
+                            {currentSectorInfo.recommendedModel === 'gemini-2.5-pro' ? 'Gemini 2.5 Pro' : 'Gemini 2.5 Flash'}
+                        </p>
                     </div>
-                </div>
+                )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                {/* Plantillas del sector seleccionado */}
+                {filteredTemplates.length > 0 ? (
+                    <div>
+                        <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                            <span className="text-lg">{currentSectorInfo?.icon}</span>
+                            Plantillas de {currentSectorInfo?.name}
+                        </h3>
+                        <div className="space-y-2">
+                            {filteredTemplates.map(template => (
+                                <TemplateCard key={template.id} template={template} />
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-8 text-slate-500 text-sm">
+                        <p>No hay plantillas para este sector</p>
+                    </div>
+                )}
 
                 {/* Modelos Guardados */}
                 <div>
@@ -330,6 +464,60 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                     )}
                 </div>
             </div>
+
+            {/* Modal de Certificaciones HIPAA */}
+            {showCertificationsModal && currentSectorInfo?.certifications && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowCertificationsModal(false)}>
+                    <div className="bg-slate-800 rounded-lg border border-green-500/50 shadow-xl max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                                <h3 className="text-xl font-semibold text-green-300">Certificaciones del Sector Salud</h3>
+                            </div>
+                            <button
+                                onClick={() => setShowCertificationsModal(false)}
+                                className="text-slate-400 hover:text-slate-200 transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="mb-4 p-3 bg-green-900/20 border border-green-700/50 rounded-lg">
+                            <p className="text-sm text-green-200">
+                                Google Gemini cuenta con las certificaciones necesarias para trabajar con datos médicos y cumplir con regulaciones de salud.
+                            </p>
+                        </div>
+
+                        <h4 className="text-sm font-medium text-slate-200 mb-3">Certificaciones Actuales (2025):</h4>
+                        <ul className="space-y-2 mb-4">
+                            {currentSectorInfo.certifications.map((cert, index) => (
+                                <li key={index} className="flex items-start gap-2 text-sm text-slate-300">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                    <span>{cert}</span>
+                                </li>
+                            ))}
+                        </ul>
+
+                        <div className="p-3 bg-blue-900/20 border border-blue-700/50 rounded-lg text-xs text-blue-200">
+                            <p className="font-medium mb-1">Nota Importante:</p>
+                            <p>Para usar Gemini con datos médicos protegidos (PHI), se requiere firmar un Business Associate Agreement (BAA) con Google y activar las configuraciones de proyectos regulados.</p>
+                        </div>
+
+                        <button
+                            onClick={() => setShowCertificationsModal(false)}
+                            className="mt-4 w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
+                        >
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
