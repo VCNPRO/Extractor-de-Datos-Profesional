@@ -176,8 +176,12 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
     const [newTemplateName, setNewTemplateName] = useState('');
     const [newTemplateDescription, setNewTemplateDescription] = useState('');
     const [showArchived, setShowArchived] = useState(false);
+    const [selectedSector, setSelectedSector] = useState<Sector>(currentSector || 'general');
     const [showCertificationsModal, setShowCertificationsModal] = useState(false);
 
+    useEffect(() => {
+        setSelectedSector(currentSector || 'general');
+    }, [currentSector]);
 
     // Load custom templates from localStorage
     useEffect(() => {
@@ -237,18 +241,19 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
     };
 
     const handleSectorChange = (sector: Sector) => {
+        setSelectedSector(sector);
         if (onSectorChange) {
             onSectorChange(sector);
         }
     };
 
     // Filtrar plantillas por sector seleccionado
-    const filteredTemplates = (currentSector || 'general') === 'general'
+    const filteredTemplates = selectedSector === 'general'
         ? defaultTemplates
-        : defaultTemplates.filter(t => t.sector === (currentSector || 'general'));
+        : defaultTemplates.filter(t => t.sector === selectedSector);
 
     const activeCustomTemplates = customTemplates.filter(t => showArchived || !t.archived);
-    const currentSectorInfo = getSectorById(currentSector || 'general');
+    const currentSectorInfo = getSectorById(selectedSector);
 
     const renderIcon = (iconType: Template['icon']) => {
         switch (iconType) {
@@ -367,7 +372,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                 </label>
                 <select
                     id="sector-select"
-                    value={currentSector || 'general'}
+                    value={selectedSector}
                     onChange={(e) => handleSectorChange(e.target.value as Sector)}
                     className="w-full rounded-md p-2 text-sm transition-colors duration-500"
                     style={{
@@ -390,7 +395,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                 )}
 
                 {/* Mostrar info de certificaciones para sector Salud */}
-                {currentSector === 'salud' && currentSectorInfo?.certifications && (
+                {selectedSector === 'salud' && currentSectorInfo?.certifications && (
                     <button
                         onClick={() => setShowCertificationsModal(true)}
                         className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 hover:opacity-90 border-2 rounded-md transition-all text-xs font-semibold"
