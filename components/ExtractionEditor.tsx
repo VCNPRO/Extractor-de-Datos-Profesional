@@ -4,15 +4,15 @@ import React, { useEffect, useState, useMemo } from 'react';
 import type { UploadedFile, SchemaField } from '../types.ts';
 // Fix: Use explicit file extension in import.
 import { SchemaBuilder } from './SchemaBuilder.tsx';
-// Fix: Use explicit file extension in import.
 import { ImageSearchPanel } from './ImageSearchPanel.tsx';
-// Fix: Use explicit file extension in import.
 import { CubeIcon, ExclamationTriangleIcon, SparklesIcon } from './Icons.tsx';
 import { downloadCSV, downloadExcel, downloadJSON, downloadPDF, generatePDFPreviewURL } from '../utils/exportUtils.ts';
 import { AVAILABLE_MODELS, type GeminiModel, searchImageInDocument } from '../services/geminiService.ts';
+import { HealthSchemaViewer } from './HealthSchemaViewer.tsx';
 
 interface ExtractionEditorProps {
     file: UploadedFile | undefined;
+    template: any;
     schema: SchemaField[];
     setSchema: React.Dispatch<React.SetStateAction<SchemaField[]>>;
     prompt: string;
@@ -44,7 +44,7 @@ const EXAMPLE_SCHEMA: SchemaField[] = [
 ];
 
 
-export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, schema, setSchema, prompt, setPrompt, onExtract, isLoading, theme, isHealthMode }) => {
+export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, template, schema, setSchema, prompt, setPrompt, onExtract, isLoading, theme, isHealthMode }) => {
     const [pdfPreviewURL, setPdfPreviewURL] = useState<string | null>(null);
     const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-flash');
     const [isSearchingImage, setIsSearchingImage] = useState(false);
@@ -213,7 +213,11 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, schema
 
                 <div>
                     <h3 className="text-base font-medium mb-2" style={{ color: textColor }}>3. Definición del Esquema JSON</h3>
-                    <SchemaBuilder schema={schema} setSchema={setSchema} />
+                    {template && 'secciones' in template ? (
+                        <HealthSchemaViewer template={template} />
+                    ) : (
+                        <SchemaBuilder schema={schema} setSchema={setSchema} />
+                    )}
                 </div>
 
                 {/* Búsqueda de imágenes - sección colapsable */}

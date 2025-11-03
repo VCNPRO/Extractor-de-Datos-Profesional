@@ -43,6 +43,7 @@ function App() {
     const [apiKeyError, setApiKeyError] = useState<boolean>(false);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
     const [currentSector, setCurrentSector] = useState<Sector>('general');
+    const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
 
     // State for the editor, which can be reused across different files
     const [prompt, setPrompt] = useState<string>('Extrae la información clave del siguiente documento según el esquema JSON proporcionado.');
@@ -183,6 +184,7 @@ function App() {
     };
 
     const handleSelectTemplate = (template: any) => {
+        setSelectedTemplate(template);
         const isHealthTemplate = 'secciones' in template;
 
         if (isHealthTemplate) {
@@ -344,6 +346,7 @@ function App() {
                     <div className="lg:col-span-5 h-full">
                         <ExtractionEditor
                             file={activeFile}
+                            template={selectedTemplate}
                             schema={schema}
                             setSchema={setSchema}
                             prompt={prompt}
