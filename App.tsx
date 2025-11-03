@@ -235,6 +235,20 @@ function App() {
         setViewingFile(null);
     };
 
+    const handleUpdateHealthTemplate = (sectionId: string, fieldName: string, newLabel: string) => {
+        if (!selectedTemplate) return;
+
+        const newTemplate = { ...selectedTemplate };
+        const section = newTemplate.secciones.find((s: any) => s.id === sectionId);
+        if (section) {
+            const field = section.campos.find((f: any) => f.nombre_campo === fieldName);
+            if (field) {
+                field.etiqueta = newLabel;
+            }
+        }
+        setSelectedTemplate(newTemplate);
+    };
+
     return (
         <div
             className="min-h-screen font-sans transition-colors duration-500"
@@ -347,6 +361,7 @@ function App() {
                         <ExtractionEditor
                             file={activeFile}
                             template={selectedTemplate}
+                            onUpdateTemplate={handleUpdateHealthTemplate}
                             schema={schema}
                             setSchema={setSchema}
                             prompt={prompt}

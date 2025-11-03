@@ -13,6 +13,7 @@ import { HealthSchemaViewer } from './HealthSchemaViewer.tsx';
 interface ExtractionEditorProps {
     file: UploadedFile | undefined;
     template: any;
+    onUpdateTemplate: (sectionId: string, fieldName: string, newLabel: string) => void;
     schema: SchemaField[];
     setSchema: React.Dispatch<React.SetStateAction<SchemaField[]>>;
     prompt: string;
@@ -44,7 +45,7 @@ const EXAMPLE_SCHEMA: SchemaField[] = [
 ];
 
 
-export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, template, schema, setSchema, prompt, setPrompt, onExtract, isLoading, theme, isHealthMode }) => {
+export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, template, onUpdateTemplate, schema, setSchema, prompt, setPrompt, onExtract, isLoading, theme, isHealthMode }) => {
     const [pdfPreviewURL, setPdfPreviewURL] = useState<string | null>(null);
     const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-flash');
     const [isSearchingImage, setIsSearchingImage] = useState(false);
@@ -214,7 +215,7 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
                 <div>
                     <h3 className="text-base font-medium mb-2" style={{ color: textColor }}>3. Definición del Esquema JSON</h3>
                     {template && 'secciones' in template ? (
-                        <HealthSchemaViewer template={template} />
+                        <HealthSchemaViewer template={template} onUpdate={onUpdateTemplate} />
                     ) : (
                         <SchemaBuilder schema={schema} setSchema={setSchema} />
                     )}
