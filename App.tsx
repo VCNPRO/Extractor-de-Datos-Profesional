@@ -66,7 +66,7 @@ function App() {
         setActiveFileId(id);
     };
     
-    const handleExtract = async () => {
+    const handleExtract = async (modelId?: string) => {
         if (!activeFile) return;
 
         // Lazy import the service
@@ -79,7 +79,7 @@ function App() {
         );
 
         try {
-            const extractedData = await extractDataFromDocument(activeFile.file, schema, prompt);
+            const extractedData = await extractDataFromDocument(activeFile.file, schema, prompt, modelId as any);
 
             setFiles(currentFiles =>
                 currentFiles.map(f => f.id === activeFile.id ? { ...f, status: 'completado', extractedData: extractedData, error: undefined } : f)
@@ -105,7 +105,7 @@ function App() {
         }
     };
 
-    const handleExtractAll = async () => {
+    const handleExtractAll = async (modelId?: string) => {
         const pendingFiles = files.filter(f => f.status === 'pendiente' || f.status === 'error');
         if (pendingFiles.length === 0) return;
 
@@ -121,7 +121,7 @@ function App() {
             );
 
             try {
-                const extractedData = await extractDataFromDocument(file.file, schema, prompt);
+                const extractedData = await extractDataFromDocument(file.file, schema, prompt, modelId as any);
 
                 setFiles(currentFiles =>
                     currentFiles.map(f => f.id === file.id ? { ...f, status: 'completado', extractedData: extractedData, error: undefined } : f)
@@ -242,7 +242,11 @@ function App() {
             <main className="p-4 sm:p-6 lg:p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" style={{height: 'calc(100vh - 112px)'}}>
                     <div className="lg:col-span-2 h-full">
-                        <TemplatesPanel onSelectTemplate={handleSelectTemplate} />
+                        <TemplatesPanel
+                            onSelectTemplate={handleSelectTemplate}
+                            currentSchema={schema}
+                            currentPrompt={prompt}
+                        />
                     </div>
                     <div className="lg:col-span-3 h-full">
                          <FileUploader

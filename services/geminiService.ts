@@ -108,13 +108,44 @@ const getGenAI = () => {
     return ai;
 }
 
+export type GeminiModel = 'gemini-2.5-flash' | 'gemini-2.5-pro' | 'gemini-1.5-flash' | 'gemini-1.5-pro';
+
+export interface ModelInfo {
+    id: GeminiModel;
+    name: string;
+    description: string;
+    bestFor: string;
+}
+
+export const AVAILABLE_MODELS: ModelInfo[] = [
+    {
+        id: 'gemini-2.5-flash',
+        name: 'Flash 2.5 (Rápido)',
+        description: 'Modelo rápido y eficiente',
+        bestFor: 'Documentos simples, facturas básicas, textos cortos'
+    },
+    {
+        id: 'gemini-2.5-pro',
+        name: 'Pro 2.5 (Avanzado)',
+        description: 'Modelo avanzado con mejor precisión',
+        bestFor: 'Documentos complejos, múltiples tablas, análisis profundo'
+    },
+    {
+        id: 'gemini-1.5-flash',
+        name: 'Flash 1.5',
+        description: 'Versión anterior del modelo rápido',
+        bestFor: 'Documentos simples con compatibilidad legacy'
+    }
+];
+
 export const extractDataFromDocument = async (
     file: File,
     schema: SchemaField[],
-    prompt: string
+    prompt: string,
+    modelId: GeminiModel = 'gemini-2.5-flash'
 ): Promise<object> => {
     const genAI = getGenAI();
-    const model = 'gemini-2.5-flash';
+    const model = modelId;
 
     const generativePart = await fileToGenerativePart(file);
 
@@ -149,5 +180,59 @@ export const extractDataFromDocument = async (
             throw new Error(`Error de la API de Gemini: ${error.message}`);
         }
         throw new Error("Ocurrió un error desconocido al comunicarse con la API de Gemini.");
+    }
+};
+
+/**
+ * Busca una imagen/logo de referencia en un documento
+ */
+export const searchImageInDocument = async (
+    documentFile: File,
+    referenceImageFile: File,
+    modelId: GeminiModel = 'gemini-2.5-flash'
+): Promise<{ found: boolean; description: string; location?: string; confidence?: string }> => {
+    const genAI = getGenAI();
+    const model = modelId;
+
+    const documentPart = await fileToGenerativePart(documentFile);
+    const referencePart = await fileToGenerativePart(referenceImageFile);
+
+    const prompt = {
+        text: `Analiza el documento y busca si contiene una imagen o logo similar a la imagen de referencia proporcionada.
+
+Proporciona la respuesta en formato JSON con los siguientes campos:
+- found: boolean (true si se encontró una imagen similar, false si no)
+- description: string (descripción de lo que encontraste o no encontraste)
+- location: string (opcional, ubicación aproximada en el documento: "arriba izquierda", "centro", "pie de página", etc.)
+- confidence: string (opcional, nivel de confianza: "alta", "media", "baja")
+
+Sé específico en la descripción sobre las similitudes o diferencias encontradas.`
+    };
+
+    try {
+        const response: GenerateContentResponse = await genAI.models.generateContent({
+            model: model,
+            contents: {
+                parts: [
+                    prompt,
+                    { text: "Imagen de referencia a buscar:" },
+                    referencePart,
+                    { text: "Documento donde buscar:" },
+                    documentPart
+                ]
+            },
+            config: {
+                responseMimeType: "application/json",
+            },
+        });
+
+        const jsonStr = response.text.trim();
+        return JSON.parse(jsonStr);
+    } catch (error) {
+        console.error("Error al buscar imagen en documento:", error);
+        if (error instanceof Error) {
+            throw new Error(`Error de búsqueda: ${error.message}`);
+        }
+        throw new Error("Ocurrió un error desconocido al buscar la imagen.");
     }
 };

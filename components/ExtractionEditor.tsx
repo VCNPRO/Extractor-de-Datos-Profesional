@@ -1,14 +1,15 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 // Fix: Use explicit file extension in import.
 import type { UploadedFile, SchemaField } from '../types.ts';
 // Fix: Use explicit file extension in import.
 import { SchemaBuilder } from './SchemaBuilder.tsx';
 // Fix: Use explicit file extension in import.
-import { JsonViewer } from './JsonViewer.tsx';
+import { ImageSearchPanel } from './ImageSearchPanel.tsx';
 // Fix: Use explicit file extension in import.
 import { CubeIcon, ExclamationTriangleIcon, SparklesIcon } from './Icons.tsx';
-import { downloadCSV, downloadExcel, downloadJSON } from '../utils/exportUtils.ts';
+import { downloadCSV, downloadExcel, downloadJSON, downloadPDF, generatePDFPreviewURL } from '../utils/exportUtils.ts';
+import { AVAILABLE_MODELS, type GeminiModel, searchImageInDocument } from '../services/geminiService.ts';
 
 interface ExtractionEditorProps {
     file: UploadedFile | undefined;
@@ -16,7 +17,7 @@ interface ExtractionEditorProps {
     setSchema: React.Dispatch<React.SetStateAction<SchemaField[]>>;
     prompt: string;
     setPrompt: React.Dispatch<React.SetStateAction<string>>;
-    onExtract: () => void;
+    onExtract: (modelId?: GeminiModel) => void;
     isLoading: boolean;
 }
 
@@ -42,12 +43,56 @@ const EXAMPLE_SCHEMA: SchemaField[] = [
 
 
 export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, schema, setSchema, prompt, setPrompt, onExtract, isLoading }) => {
-    
+    const [pdfPreviewURL, setPdfPreviewURL] = useState<string | null>(null);
+    const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-flash');
+    const [isSearchingImage, setIsSearchingImage] = useState(false);
+    const [imageSearchResult, setImageSearchResult] = useState<any>(null);
+    const [showImageSearch, setShowImageSearch] = useState(false);
+
     // When the active file changes, clear previous results.
     // The schema and prompt are managed by App.tsx so they persist.
     useEffect(() => {
-        // This effect can be used to reset state when file changes, if needed.
+        // Cleanup previous PDF URL
+        if (pdfPreviewURL) {
+            URL.revokeObjectURL(pdfPreviewURL);
+            setPdfPreviewURL(null);
+        }
     }, [file?.id]);
+
+    // Generate PDF preview when extracted data changes
+    useEffect(() => {
+        if (file?.extractedData && !file.error) {
+            const url = generatePDFPreviewURL(file.extractedData, file.file.name.replace(/\.[^/.]+$/, ""));
+            setPdfPreviewURL(url);
+
+            // Cleanup on unmount or when data changes
+            return () => {
+                if (url) {
+                    URL.revokeObjectURL(url);
+                }
+            };
+        }
+    }, [file?.extractedData, file?.error]);
+
+    const handleImageSearch = async (referenceImage: File, modelId: GeminiModel) => {
+        if (!file) return;
+
+        setIsSearchingImage(true);
+        setImageSearchResult(null);
+
+        try {
+            const result = await searchImageInDocument(file.file, referenceImage, modelId);
+            setImageSearchResult(result);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+            setImageSearchResult({
+                found: false,
+                description: `Error: ${errorMessage}`
+            });
+        } finally {
+            setIsSearchingImage(false);
+        }
+    };
 
     const useExample = () => {
         setPrompt(EXAMPLE_PROMPT.trim());
@@ -109,24 +154,112 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, schema
                 </div>
 
                 <div>
-                    <h3 className="text-base font-medium text-slate-200 mb-2">2. Definición del Esquema JSON</h3>
+                    <label htmlFor="model-select" className="block text-base font-medium text-slate-200 mb-2">
+                        2. Modelo de IA
+                    </label>
+                    <select
+                        id="model-select"
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value as GeminiModel)}
+                        className="w-full bg-slate-900 border border-slate-600 rounded-md p-3 focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-shadow text-sm text-slate-300"
+                    >
+                        {AVAILABLE_MODELS.map(model => (
+                            <option key={model.id} value={model.id}>
+                                {model.name} - {model.bestFor}
+                            </option>
+                        ))}
+                    </select>
+                    <p className="text-xs text-slate-400 mt-1">
+                        {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.description}
+                    </p>
+                </div>
+
+                <div>
+                    <h3 className="text-base font-medium text-slate-200 mb-2">3. Definición del Esquema JSON</h3>
                     <SchemaBuilder schema={schema} setSchema={setSchema} />
+                </div>
+
+                {/* Búsqueda de imágenes - sección colapsable */}
+                <div className="border-t border-slate-700/50 pt-4">
+                    <button
+                        onClick={() => setShowImageSearch(!showImageSearch)}
+                        className="flex items-center justify-between w-full text-left"
+                    >
+                        <h3 className="text-base font-medium text-slate-200 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            4. Búsqueda de Imágenes/Logos (Opcional)
+                        </h3>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`h-5 w-5 text-slate-400 transition-transform ${showImageSearch ? 'rotate-180' : ''}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    {showImageSearch && (
+                        <>
+                            <ImageSearchPanel
+                                file={file}
+                                onSearch={handleImageSearch}
+                                isSearching={isSearchingImage}
+                            />
+
+                            {/* Mostrar resultado de búsqueda */}
+                            {imageSearchResult && (
+                                <div className={`mt-4 p-4 rounded-lg border ${imageSearchResult.found ? 'bg-green-900/20 border-green-700/50' : 'bg-slate-800/50 border-slate-600'}`}>
+                                    <div className="flex items-start gap-3">
+                                        {imageSearchResult.found ? (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        )}
+                                        <div className="flex-1">
+                                            <h4 className="text-sm font-semibold text-slate-200 mb-1">
+                                                {imageSearchResult.found ? '✓ Imagen encontrada' : 'Imagen no encontrada'}
+                                            </h4>
+                                            <p className="text-sm text-slate-300 mb-2">{imageSearchResult.description}</p>
+                                            {imageSearchResult.location && (
+                                                <p className="text-xs text-slate-400">
+                                                    <span className="font-medium">Ubicación:</span> {imageSearchResult.location}
+                                                </p>
+                                            )}
+                                            {imageSearchResult.confidence && (
+                                                <p className="text-xs text-slate-400">
+                                                    <span className="font-medium">Confianza:</span> {imageSearchResult.confidence}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             </div>
 
             <div className="p-4 md:p-6 border-t border-slate-700/50 bg-slate-800/80">
                 <button
-                    onClick={onExtract}
+                    onClick={() => onExtract(selectedModel)}
                     disabled={isLoading || !file || hasSchemaErrors || schema.length === 0}
                     className="w-full flex items-center justify-center gap-2 bg-cyan-600 text-white font-bold py-3 px-4 rounded-md hover:bg-cyan-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isLoading ? (
                         <>
                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            Extrayendo Datos...
+                            Extrayendo Datos con {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.name}...
                         </>
                     ) : (
-                        "Ejecutar Extracción"
+                        `Ejecutar Extracción con ${AVAILABLE_MODELS.find(m => m.id === selectedModel)?.name}`
                     )}
                 </button>
                 {hasSchemaErrors && (
@@ -140,8 +273,18 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, schema
             {file.extractedData && !file.error && (
                  <div className="border-t border-slate-700/50">
                     <div className="flex justify-between items-center p-4 md:p-6 pb-2">
-                        <h3 className="text-base font-medium text-slate-200">Resultados Extraídos</h3>
+                        <h3 className="text-base font-medium text-slate-200">Resultados Extraídos (Vista PDF)</h3>
                         <div className="flex gap-2">
+                            <button
+                                onClick={() => downloadPDF(file.extractedData!, file.file.name.replace(/\.[^/.]+$/, ""))}
+                                className="text-xs px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors flex items-center gap-1"
+                                title="Descargar PDF"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                PDF
+                            </button>
                             <button
                                 onClick={() => downloadJSON(file.extractedData!, file.file.name.replace(/\.[^/.]+$/, ""))}
                                 className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors flex items-center gap-1"
@@ -174,8 +317,18 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, schema
                             </button>
                         </div>
                     </div>
-                    <div className="p-4 md:p-6 pt-0 bg-slate-900/50 max-h-96 overflow-y-auto">
-                        <JsonViewer data={file.extractedData} />
+                    <div className="p-4 md:p-6 pt-0 bg-slate-900/50">
+                        {pdfPreviewURL ? (
+                            <iframe
+                                src={pdfPreviewURL}
+                                className="w-full h-96 border border-slate-600 rounded-md"
+                                title="Vista previa del PDF"
+                            />
+                        ) : (
+                            <div className="flex items-center justify-center h-96 text-slate-400">
+                                Generando vista previa del PDF...
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
