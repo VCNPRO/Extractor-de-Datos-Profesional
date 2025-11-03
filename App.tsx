@@ -295,6 +295,8 @@ function App() {
                             currentPrompt={prompt}
                             onSectorChange={handleSectorChange}
                             currentSector={currentSector}
+                            theme={currentTheme}
+                            isHealthMode={isHealthMode}
                         />
                     </div>
                     <div className="lg:col-span-3 h-full">
@@ -307,6 +309,8 @@ function App() {
                             onExtractAll={handleExtractAll}
                             isLoading={isLoading}
                             onViewFile={handleViewFile}
+                            theme={currentTheme}
+                            isHealthMode={isHealthMode}
                         />
                     </div>
                     <div className="lg:col-span-5 h-full">
@@ -318,10 +322,17 @@ function App() {
                             setPrompt={setPrompt}
                             onExtract={handleExtract}
                             isLoading={isLoading}
+                            theme={currentTheme}
+                            isHealthMode={isHealthMode}
                         />
                     </div>
                     <div className="lg:col-span-2 h-full">
-                        <HistoryViewer history={history} onReplay={handleReplay} />
+                        <HistoryViewer
+                            history={history}
+                            onReplay={handleReplay}
+                            theme={currentTheme}
+                            isHealthMode={isHealthMode}
+                        />
                     </div>
                 </div>
             </main>
