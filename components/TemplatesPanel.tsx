@@ -266,17 +266,30 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
         <div className="relative group/card">
             <button
                 onClick={() => onSelectTemplate(template)}
-                className="w-full text-left p-3 bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700 rounded-lg transition-colors group"
+                className="w-full text-left p-3 border rounded-lg transition-all group hover:shadow-md"
+                style={{
+                    backgroundColor: isHealthMode ? '#f0fdf4' : 'rgba(30, 41, 59, 0.5)',
+                    borderColor: isHealthMode ? '#6ee7b7' : '#475569'
+                }}
             >
                 <div className="flex items-start gap-3">
-                    <div className="text-blue-400 mt-0.5 group-hover:text-blue-300 transition-colors">
+                    <div
+                        className="mt-0.5 transition-colors"
+                        style={{ color: isHealthMode ? accentColor : '#60a5fa' }}
+                    >
                         {renderIcon(template.icon)}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-slate-200 group-hover:text-slate-100 transition-colors">
-                            {template.name} {template.archived && <span className="text-xs text-slate-500">(Archivada)</span>}
+                        <h4
+                            className="text-sm font-semibold transition-colors"
+                            style={{ color: textColor }}
+                        >
+                            {template.name} {template.archived && <span className="text-xs opacity-50">(Archivada)</span>}
                         </h4>
-                        <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">
+                        <p
+                            className="text-xs mt-0.5 line-clamp-2 transition-colors"
+                            style={{ color: textSecondary }}
+                        >
                             {template.description}
                         </p>
                     </div>
@@ -423,7 +436,10 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                 {/* Plantillas del sector seleccionado */}
                 {filteredTemplates.length > 0 ? (
                     <div>
-                        <h3 className="text-sm font-medium text-slate-300 mb-3 flex items-center gap-2">
+                        <h3
+                            className="text-sm font-bold mb-3 flex items-center gap-2 transition-colors duration-500"
+                            style={{ color: textColor }}
+                        >
                             <span className="text-lg">{currentSectorInfo?.icon}</span>
                             Plantillas de {currentSectorInfo?.name}
                         </h3>
@@ -434,7 +450,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                         </div>
                     </div>
                 ) : (
-                    <div className="text-center py-8 text-slate-500 text-sm">
+                    <div className="text-center py-8 text-sm transition-colors duration-500" style={{ color: textSecondary }}>
                         <p>No hay plantillas para este sector</p>
                     </div>
                 )}
@@ -442,13 +458,17 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                 {/* Modelos Guardados */}
                 <div>
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                            <FileIcon className="w-4 h-4 text-purple-400" />
+                        <h3
+                            className="text-sm font-bold flex items-center gap-2 transition-colors duration-500"
+                            style={{ color: textColor }}
+                        >
+                            <FileIcon className="w-4 h-4" style={{ color: isHealthMode ? '#a855f7' : '#c084fc' }} />
                             Mis Modelos
                         </h3>
                         <button
                             onClick={() => setShowArchived(!showArchived)}
-                            className="text-xs text-slate-400 hover:text-slate-300 transition-colors"
+                            className="text-xs hover:opacity-80 transition-all font-medium"
+                            style={{ color: textSecondary }}
                         >
                             {showArchived ? 'Ocultar archivadas' : 'Ver archivadas'}
                         </button>
@@ -458,7 +478,12 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                     {currentSchema && currentPrompt && (
                         <button
                             onClick={() => setShowSaveDialog(true)}
-                            className="w-full mb-3 p-3 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/50 rounded-lg transition-colors flex items-center justify-center gap-2 text-purple-300 hover:text-purple-200"
+                            className="w-full mb-3 p-3 border-2 rounded-lg transition-all flex items-center justify-center gap-2 font-bold hover:opacity-90"
+                            style={{
+                                backgroundColor: isHealthMode ? '#d1fae5' : 'rgba(147, 51, 234, 0.2)',
+                                borderColor: isHealthMode ? '#6ee7b7' : 'rgba(168, 85, 247, 0.5)',
+                                color: isHealthMode ? '#047857' : '#e9d5ff'
+                            }}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -513,9 +538,9 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-8 text-slate-500 text-sm">
+                        <div className="text-center py-8 text-sm transition-colors duration-500" style={{ color: textSecondary }}>
                             <p>No hay modelos guardados</p>
-                            <p className="text-xs mt-1">Crea y guarda tus propios modelos</p>
+                            <p className="text-xs mt-1 opacity-75">Crea y guarda tus propios modelos</p>
                         </div>
                     )}
                 </div>
