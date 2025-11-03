@@ -335,6 +335,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
     const headerBg = isHealthMode ? '#ffffff' : 'rgba(2, 6, 23, 0.5)';
     const textColor = isHealthMode ? theme?.text || '#064e3b' : '#f1f5f9';
     const textSecondary = isHealthMode ? theme?.textSecondary || '#065f46' : '#94a3b8';
+    const accentColor = isHealthMode ? theme?.primary || '#047857' : '#06b6d4';
 
     return (
         <div
