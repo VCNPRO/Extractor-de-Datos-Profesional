@@ -179,6 +179,10 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
     const [selectedSector, setSelectedSector] = useState<Sector>(currentSector || 'general');
     const [showCertificationsModal, setShowCertificationsModal] = useState(false);
 
+    useEffect(() => {
+        setSelectedSector(currentSector || 'general');
+    }, [currentSector]);
+
     // Load custom templates from localStorage
     useEffect(() => {
         const stored = localStorage.getItem('customTemplates');
