@@ -22,6 +22,37 @@ const FieldRenderer: React.FC<{ seccion: Section, campo: Field, onUpdate: (secti
           <p className="text-xs text-gray-400 mt-1">{campo.tipo_dato}</p>
         </div>
       );
+    case 'multiseleccion':
+      return (
+        <div className="p-3 bg-slate-700/30 rounded-md">
+          <p className="font-semibold">{campo.etiqueta}</p>
+          <div className="space-y-2 mt-2">
+            {campo.opciones?.map(opcion => (
+              <div key={opcion.valor} className="flex items-center">
+                <input type="checkbox" id={opcion.valor} name={opcion.valor} value={opcion.valor} className="h-4 w-4 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500" />
+                <label htmlFor={opcion.valor} className="ml-3 text-sm text-gray-300">{opcion.etiqueta}</label>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">{campo.tipo_dato}</p>
+        </div>
+      );
+    case 'fecha':
+      return (
+        <div className="p-3 bg-slate-700/30 rounded-md">
+          <p className="font-semibold">{campo.etiqueta}</p>
+          <input type="date" className="w-full bg-slate-800 border border-slate-600 rounded-md p-2 mt-1 text-sm" />
+          <p className="text-xs text-gray-400 mt-1">{campo.tipo_dato}</p>
+        </div>
+      );
+    case 'espacio_libre':
+      return (
+        <div className="p-3 bg-slate-700/30 rounded-md">
+          <p className="font-semibold">{campo.etiqueta}</p>
+          <textarea rows={3} className="w-full bg-slate-800 border border-slate-600 rounded-md p-2 mt-1 text-sm" />
+          <p className="text-xs text-gray-400 mt-1">{campo.tipo_dato}</p>
+        </div>
+      );
     default:
       return (
         <div className="p-3 bg-slate-700/30 rounded-md">
