@@ -388,7 +388,7 @@ function App() {
                                 style={{
                                     color: isHealthMode ? '#047857' : '#f1f5f9'
                                 }}
-                            >VerbaDoc Europa</h1>
+                            >verbadoc europa</h1>
                             <p
                                 className="text-sm font-sans transition-colors duration-500"
                                 style={{
