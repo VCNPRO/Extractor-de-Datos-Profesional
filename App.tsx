@@ -103,7 +103,7 @@ function App() {
     }, [currentSector]);
 
     // Determinar si estamos en modo Europa
-    const isHealthMode = currentSector === 'Europa';
+    const isHealthMode = false;
 
     // Cargar historial desde localStorage al iniciar
     useEffect(() => {
@@ -388,9 +388,7 @@ function App() {
                                 style={{
                                     color: isHealthMode ? '#047857' : '#f1f5f9'
                                 }}
-                            >
-                                verbadoc
-                            </h1>
+                            >VerbaDoc Europa</h1>
                             <p
                                 className="text-sm font-sans transition-colors duration-500"
                                 style={{
