@@ -87,7 +87,7 @@ function App() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [viewingFile, setViewingFile] = useState<File | null>(null);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
-    const [currentSector, setCurrentSector] = useState<Sector>('salud');
+    const [currentSector, setCurrentSector] = useState<Sector>('Europa');
     const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
     const [showResultsExpanded, setShowResultsExpanded] = useState<boolean>(false);
     const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-flash');
@@ -102,8 +102,8 @@ function App() {
         return sectorInfo?.theme || getDefaultTheme();
     }, [currentSector]);
 
-    // Determinar si estamos en modo salud
-    const isHealthMode = currentSector === 'salud';
+    // Determinar si estamos en modo Europa
+    const isHealthMode = currentSector === 'Europa';
 
     // Cargar historial desde localStorage al iniciar
     useEffect(() => {
@@ -270,7 +270,7 @@ function App() {
                 })
             );
             setSchema(newSchema);
-            setPrompt('Extrae la información clave del siguiente documento de salud.');
+            setPrompt('Extrae la información clave del siguiente documento de Europa.');
         } else {
             setSchema(JSON.parse(JSON.stringify(template.schema)));
             setPrompt(template.prompt);
@@ -397,7 +397,7 @@ function App() {
                                     color: isHealthMode ? '#064e3b' : '#94a3b8'
                                 }}
                             >
-                                trabajando para {isHealthMode && <span className="font-bold px-2 py-1 bg-green-100 text-green-800 rounded-md">🏥 sectores profesionales</span>}
+                                trabajando para {isHealthMode && <span className="font-bold px-2 py-1 bg-blue-100 text-blue-800 rounded-md">💼 sectores profesionales</span>}
                             </p>
                         </div>
                         <div className="flex items-center gap-4">
@@ -433,7 +433,7 @@ function App() {
                             className="flex items-center gap-2 px-4 py-2 border-2 rounded-lg text-sm transition-all duration-500 font-bold shadow-lg hover:shadow-xl hover:scale-105"
                             style={{
                                 backgroundColor: isHealthMode ? '#047857' : '#0891b2',
-                                borderColor: isHealthMode ? '#059669' : '#06b6d4',
+                                borderColor: isHealthMode ? '#2563eb' : '#06b6d4',
                                 color: '#ffffff'
                             }}
                             title="Ayuda y Guía de Usuario"
