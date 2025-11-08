@@ -36,3 +36,7 @@ export const SECTORS: SectorInfo[] = [
         recommendedModel: 'gemini-2.5-pro',
     },
 ];
+
+export const getSectorById = (sectorId: string): SectorInfo | undefined => {
+    return SECTORS.find(sector => sector.id === sectorId);
+};
