@@ -34,6 +34,195 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
                 {/* Content */}
                 <div className="flex-grow overflow-y-auto p-6 space-y-6">
+                    {/* NUEVA SECCIÓN: Guía Informes Clínicos */}
+                    <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-lg p-6 border-2 border-green-600/50">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-green-300">🏥 Guía: Crear Plantilla para Informes Clínicos</h3>
+                                <p className="text-sm text-green-200/80">Paso a paso para usuarios sin experiencia técnica</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            {/* Paso 1 - Ir al panel derecho */}
+                            <div className="bg-slate-800/50 p-4 rounded-lg border border-green-700/30">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 w-7 h-7 bg-green-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
+                                        1
+                                    </div>
+                                    <div className="flex-grow">
+                                        <h4 className="font-semibold text-green-300 mb-2">Ve al panel derecho</h4>
+                                        <p className="text-sm text-slate-300 mb-2">
+                                            En la parte derecha de la pantalla, busca el botón verde con borde punteado que dice <strong className="text-green-400">"Crear Plantilla"</strong>
+                                        </p>
+                                        <div className="bg-green-900/20 p-2 rounded border border-green-700/30 text-xs text-green-200">
+                                            📍 Está arriba de todo, antes de las plantillas predefinidas
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Paso 2 - Dar nombre */}
+                            <div className="bg-slate-800/50 p-4 rounded-lg border border-green-700/30">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 w-7 h-7 bg-green-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
+                                        2
+                                    </div>
+                                    <div className="flex-grow">
+                                        <h4 className="font-semibold text-green-300 mb-2">Ponle un nombre a tu plantilla</h4>
+                                        <p className="text-sm text-slate-300 mb-2">
+                                            En el campo <strong>"Nombre"</strong>, escribe algo descriptivo:
+                                        </p>
+                                        <div className="bg-slate-900/50 p-2 rounded border border-green-700/30">
+                                            <p className="text-xs text-green-300 font-mono">Ejemplo: "Informe Consulta General"</p>
+                                        </div>
+                                        <p className="text-xs text-slate-400 mt-2">
+                                            (Opcional) Agrega una descripción: "Para extraer datos de consultas médicas generales"
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Paso 3 - Escribir prompt */}
+                            <div className="bg-slate-800/50 p-4 rounded-lg border border-green-700/30">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 w-7 h-7 bg-green-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
+                                        3
+                                    </div>
+                                    <div className="flex-grow">
+                                        <h4 className="font-semibold text-green-300 mb-2">Escribe qué información quieres extraer</h4>
+                                        <p className="text-sm text-slate-300 mb-2">
+                                            En el campo <strong>"Prompt"</strong>, describe lo que necesitas en lenguaje normal:
+                                        </p>
+                                        <div className="bg-slate-900/50 p-3 rounded border border-green-700/30 space-y-2">
+                                            <p className="text-xs text-green-300 font-semibold">✅ Ejemplo para informe clínico:</p>
+                                            <p className="text-xs text-slate-300 font-mono">
+                                                "Extrae del informe médico: nombre del paciente, fecha de consulta,
+                                                diagnóstico, tratamiento prescrito y próxima cita"
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Paso 4 - Definir campos */}
+                            <div className="bg-slate-800/50 p-4 rounded-lg border border-green-700/30">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 w-7 h-7 bg-green-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
+                                        4
+                                    </div>
+                                    <div className="flex-grow">
+                                        <h4 className="font-semibold text-green-300 mb-2">Define los campos que quieres capturar</h4>
+                                        <p className="text-sm text-slate-300 mb-2">
+                                            En <strong>"Campos del Esquema"</strong>, crea un campo por cada dato:
+                                        </p>
+                                        <div className="space-y-2">
+                                            <div className="bg-slate-900/50 p-2 rounded border border-green-700/30 flex items-center gap-2">
+                                                <span className="text-xs font-mono text-green-400">nombre_paciente</span>
+                                                <span className="text-xs text-slate-400">→</span>
+                                                <span className="text-xs text-blue-300">STRING</span>
+                                                <span className="text-xs text-slate-400">(texto)</span>
+                                            </div>
+                                            <div className="bg-slate-900/50 p-2 rounded border border-green-700/30 flex items-center gap-2">
+                                                <span className="text-xs font-mono text-green-400">fecha_consulta</span>
+                                                <span className="text-xs text-slate-400">→</span>
+                                                <span className="text-xs text-blue-300">STRING</span>
+                                                <span className="text-xs text-slate-400">(fecha)</span>
+                                            </div>
+                                            <div className="bg-slate-900/50 p-2 rounded border border-green-700/30 flex items-center gap-2">
+                                                <span className="text-xs font-mono text-green-400">diagnostico</span>
+                                                <span className="text-xs text-slate-400">→</span>
+                                                <span className="text-xs text-blue-300">STRING</span>
+                                                <span className="text-xs text-slate-400">(texto)</span>
+                                            </div>
+                                            <div className="bg-slate-900/50 p-2 rounded border border-green-700/30 flex items-center gap-2">
+                                                <span className="text-xs font-mono text-green-400">tratamiento</span>
+                                                <span className="text-xs text-slate-400">→</span>
+                                                <span className="text-xs text-blue-300">STRING</span>
+                                                <span className="text-xs text-slate-400">(texto)</span>
+                                            </div>
+                                        </div>
+                                        <div className="bg-yellow-900/20 p-2 rounded border border-yellow-700/30 mt-3">
+                                            <p className="text-xs text-yellow-200">
+                                                ⚠️ <strong>Importante:</strong> No uses espacios ni tildes en los nombres de campos.
+                                                Usa guión bajo (_) para separar palabras.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Paso 5 - Añadir más campos */}
+                            <div className="bg-slate-800/50 p-4 rounded-lg border border-green-700/30">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 w-7 h-7 bg-green-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
+                                        5
+                                    </div>
+                                    <div className="flex-grow">
+                                        <h4 className="font-semibold text-green-300 mb-2">Añade todos los campos que necesites</h4>
+                                        <p className="text-sm text-slate-300 mb-2">
+                                            Haz clic en <strong className="text-green-400">"Añadir Campo"</strong> (botón verde) para agregar más campos.
+                                        </p>
+                                        <div className="bg-slate-900/50 p-2 rounded border border-green-700/30">
+                                            <p className="text-xs text-slate-300">
+                                                💡 <strong className="text-green-300">Tip:</strong> Si un campo puede tener varios valores (ej: varios medicamentos),
+                                                usa tipo <code className="text-amber-300">ARRAY_OF_STRINGS</code>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Paso 6 - Guardar */}
+                            <div className="bg-slate-800/50 p-4 rounded-lg border border-green-700/30">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 w-7 h-7 bg-green-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
+                                        6
+                                    </div>
+                                    <div className="flex-grow">
+                                        <h4 className="font-semibold text-green-300 mb-2">Guarda tu plantilla</h4>
+                                        <p className="text-sm text-slate-300 mb-2">
+                                            Haz clic en el botón verde <strong className="text-green-400">"Guardar"</strong> al final del formulario.
+                                        </p>
+                                        <div className="bg-green-900/20 p-2 rounded border border-green-700/30">
+                                            <p className="text-xs text-green-200">
+                                                ✅ ¡Listo! Tu plantilla aparecerá en <strong>"Mis Modelos"</strong> y podrás reutilizarla siempre que quieras
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Paso 7 - Usar plantilla */}
+                            <div className="bg-gradient-to-r from-blue-900/30 to-cyan-900/30 p-4 rounded-lg border-2 border-blue-600/50">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center font-bold text-white text-sm">
+                                        7
+                                    </div>
+                                    <div className="flex-grow">
+                                        <h4 className="font-semibold text-blue-300 mb-2">Cómo usar tu plantilla</h4>
+                                        <ol className="text-sm text-slate-300 space-y-2 list-decimal list-inside">
+                                            <li>Sube un informe clínico (panel izquierdo)</li>
+                                            <li>En el panel derecho, haz clic en tu plantilla guardada</li>
+                                            <li>En el panel central, haz clic en <strong className="text-cyan-400">"Extraer"</strong></li>
+                                            <li>¡Los datos se extraerán automáticamente según tu plantilla!</li>
+                                            <li>Descarga en JSON o CSV desde el panel derecho</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-slate-700 pt-6">
+                        <h3 className="text-lg font-semibold text-slate-300 mb-4">📚 Guía General de Uso</h3>
+                    </div>
+
                     {/* Paso 1 */}
                     <div className="bg-slate-900/50 rounded-lg p-5 border border-slate-700/50">
                         <div className="flex items-start gap-3">

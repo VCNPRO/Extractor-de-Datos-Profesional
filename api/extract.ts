@@ -1,4 +1,4 @@
-﻿import { VertexAI } from '@google-cloud/vertexai';
+import { VertexAI } from '@google-cloud/vertexai';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Configuración de Vertex AI en región europea

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FileTextIcon, ReceiptIcon, FileIcon } from './Icons.tsx';
+import { FileTextIcon, ReceiptIcon, FileIcon, SparklesIcon } from './Icons.tsx';
 import type { SchemaField, Sector } from '../types.ts';
 import { SECTORS, getSectorById } from '../utils/sectorsConfig.ts';
+import { SchemaBuilder } from './SchemaBuilder.tsx';
+import { generateSchemaFromPrompt } from '../services/geminiService.ts';
 
 export interface Template {
     id: string;
@@ -28,94 +30,6 @@ interface TemplatesPanelProps {
 }
 
 const defaultTemplates: any[] = [
-    // Contabilidad
-    {
-        id: 'factura-basica',
-        name: 'Factura Básica',
-        description: 'Extrae datos básicos de facturas',
-        type: 'factura',
-        icon: 'receipt',
-        sector: 'contabilidad',
-        schema: [
-            { id: 'field-1', name: 'cliente', type: 'STRING' },
-            { id: 'field-2', name: 'fecha', type: 'STRING' },
-            { id: 'field-3', name: 'total', type: 'NUMBER' },
-            { id: 'field-4', name: 'items', type: 'ARRAY_OF_STRINGS' }
-        ],
-        prompt: 'Extrae la información de la factura: cliente, fecha, total e items.'
-    },
-    {
-        id: 'factura-completa',
-        name: 'Factura Completa',
-        description: 'Extracción detallada de facturas',
-        type: 'factura',
-        icon: 'receipt',
-        sector: 'contabilidad',
-        schema: [
-            { id: 'field-1', name: 'numero_factura', type: 'STRING' },
-            { id: 'field-2', name: 'cliente', type: 'STRING' },
-            { id: 'field-3', name: 'fecha', type: 'STRING' },
-            { id: 'field-4', name: 'subtotal', type: 'NUMBER' },
-            { id: 'field-5', name: 'impuestos', type: 'NUMBER' },
-            { id: 'field-6', name: 'total', type: 'NUMBER' },
-            { id: 'field-7', name: 'items', type: 'ARRAY_OF_STRINGS' }
-        ],
-        prompt: 'Extrae todos los detalles de la factura incluyendo número, cliente, fecha, subtotal, impuestos, total e items detallados.'
-    },
-    // Finanzas
-    {
-        id: 'estado-financiero',
-        name: 'Estado Financiero',
-        description: 'Extrae datos de estados financieros',
-        type: 'nota',
-        icon: 'document',
-        sector: 'finanzas',
-        schema: [
-            { id: 'field-1', name: 'periodo', type: 'STRING' },
-            { id: 'field-2', name: 'ingresos_totales', type: 'NUMBER' },
-            { id: 'field-3', name: 'gastos_totales', type: 'NUMBER' },
-            { id: 'field-4', name: 'resultado_neto', type: 'NUMBER' },
-            { id: 'field-5', name: 'detalles', type: 'STRING' }
-        ],
-        prompt: 'Extrae los datos del estado financiero: periodo, ingresos totales, gastos totales, resultado neto y detalles relevantes.'
-    },
-    // Marketing
-    {
-        id: 'reporte-campana',
-        name: 'Reporte de Campaña',
-        description: 'Métricas de campañas de marketing',
-        type: 'nota',
-        icon: 'document',
-        sector: 'marketing',
-        schema: [
-            { id: 'field-1', name: 'nombre_campana', type: 'STRING' },
-            { id: 'field-2', name: 'fecha_inicio', type: 'STRING' },
-            { id: 'field-3', name: 'fecha_fin', type: 'STRING' },
-            { id: 'field-4', name: 'impresiones', type: 'NUMBER' },
-            { id: 'field-5', name: 'clics', type: 'NUMBER' },
-            { id: 'field-6', name: 'conversiones', type: 'NUMBER' },
-            { id: 'field-7', name: 'roi', type: 'NUMBER' }
-        ],
-        prompt: 'Extrae las métricas de la campaña: nombre, fechas, impresiones, clics, conversiones y ROI.'
-    },
-    // Legal
-    {
-        id: 'contrato',
-        name: 'Contrato Legal',
-        description: 'Extrae datos clave de contratos',
-        type: 'nota',
-        icon: 'document',
-        sector: 'legal',
-        schema: [
-            { id: 'field-1', name: 'tipo_contrato', type: 'STRING' },
-            { id: 'field-2', name: 'partes', type: 'ARRAY_OF_STRINGS' },
-            { id: 'field-3', name: 'fecha_firma', type: 'STRING' },
-            { id: 'field-4', name: 'vigencia', type: 'STRING' },
-            { id: 'field-5', name: 'monto', type: 'STRING' },
-            { id: 'field-6', name: 'clausulas_principales', type: 'ARRAY_OF_STRINGS' }
-        ],
-        prompt: 'Extrae los datos del contrato: tipo, partes involucradas, fecha de firma, vigencia, monto y cláusulas principales.'
-    },
     // Salud
     {
         id: 'template_001_hc_completa',
@@ -180,6 +94,10 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
     const [showArchived, setShowArchived] = useState(false);
     const [selectedSector, setSelectedSector] = useState<Sector>(currentSector || 'general');
     const [showCertificationsModal, setShowCertificationsModal] = useState(false);
+    const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
+    const [newSchema, setNewSchema] = useState<SchemaField[]>([{ id: `field-${Date.now()}`, name: '', type: 'STRING' }]);
+    const [newPrompt, setNewPrompt] = useState('Extrae la información clave del siguiente documento según el esquema JSON proporcionado.');
+    const [isGeneratingSchema, setIsGeneratingSchema] = useState(false);
 
     useEffect(() => {
         setSelectedSector(currentSector || 'general');
@@ -203,7 +121,13 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
     };
 
     const handleSaveTemplate = () => {
-        if (!newTemplateName.trim() || !currentSchema || !currentPrompt) return;
+        if (!newTemplateName.trim()) return;
+
+        // Usar newSchema/newPrompt si estamos creando, sino usar current
+        const schemaToSave = isCreatingTemplate ? newSchema : (currentSchema || []);
+        const promptToSave = isCreatingTemplate ? newPrompt : (currentPrompt || '');
+
+        if (schemaToSave.length === 0) return;
 
         const newTemplate: any = {
             id: `custom-${Date.now()}`,
@@ -211,8 +135,8 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
             description: newTemplateDescription.trim() || 'Plantilla personalizada',
             type: 'modelo',
             icon: 'file',
-            schema: JSON.parse(JSON.stringify(currentSchema)),
-            prompt: currentPrompt,
+            schema: JSON.parse(JSON.stringify(schemaToSave)),
+            prompt: promptToSave,
             custom: true,
             archived: false
         };
@@ -224,6 +148,28 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
         setNewTemplateName('');
         setNewTemplateDescription('');
         setShowSaveDialog(false);
+        setIsCreatingTemplate(false);
+        // Reset new schema/prompt
+        setNewSchema([{ id: `field-${Date.now()}`, name: '', type: 'STRING' }]);
+        setNewPrompt('Extrae la información clave del siguiente documento según el esquema JSON proporcionado.');
+    };
+
+    const handleGenerateSchemaFromPrompt = async () => {
+        if (!newPrompt.trim()) {
+            alert('Por favor, escribe primero un prompt describiendo qué datos quieres extraer.');
+            return;
+        }
+
+        setIsGeneratingSchema(true);
+        try {
+            const generatedFields = await generateSchemaFromPrompt(newPrompt);
+            setNewSchema(generatedFields);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+            alert(`Error al generar campos: ${errorMessage}`);
+        } finally {
+            setIsGeneratingSchema(false);
+        }
     };
 
     const handleArchiveTemplate = (templateId: string) => {
@@ -362,112 +308,275 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                 <p className="text-xs mt-1 transition-colors duration-500" style={{ color: textSecondary }}>Modelos y plantillas predefinidas</p>
             </div>
 
-            {/* Selector de Sectores */}
-            <div
-                className="p-4 border-b transition-colors duration-500"
-                style={{
-                    backgroundColor: isHealthMode ? '#f0fdf4' : 'rgba(15, 23, 42, 0.5)',
-                    borderBottomColor: borderColor
-                }}
-            >
-                <label
-                    htmlFor="sector-select"
-                    className="block text-sm font-medium mb-2 transition-colors duration-500"
-                    style={{ color: textColor }}
-                >
-                    Filtrar por Sector
-                </label>
-                <select
-                    id="sector-select"
-                    value={selectedSector}
-                    onChange={(e) => handleSectorChange(e.target.value as Sector)}
-                    className="w-full rounded-md p-2 text-sm transition-colors duration-500"
-                    style={{
-                        backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
-                        borderColor: borderColor,
-                        color: textColor,
-                        border: `1px solid ${borderColor}`
-                    }}
-                >
-                    {SECTORS.map(sector => (
-                        <option key={sector.id} value={sector.id}>
-                            {sector.icon} {sector.name}
-                        </option>
-                    ))}
-                </select>
-                {currentSectorInfo?.description && (
-                    <p className="text-xs mt-1 transition-colors duration-500" style={{ color: textSecondary }}>
-                        {currentSectorInfo.description}
-                    </p>
-                )}
-
-                {/* Mostrar info de certificaciones para sector Salud */}
-                {selectedSector === 'salud' && currentSectorInfo?.certifications && (
-                    <button
-                        onClick={() => setShowCertificationsModal(true)}
-                        className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 hover:opacity-90 border-2 rounded-md transition-all text-xs font-semibold"
-                        style={{
-                            backgroundColor: '#d1fae5',
-                            borderColor: '#6ee7b7',
-                            color: '#047857'
-                        }}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        Ver Certificaciones HIPAA
-                    </button>
-                )}
-
-                {/* Modelo recomendado */}
-                {currentSectorInfo?.recommendedModel && (
-                    <div
-                        className="mt-3 p-2 border rounded text-xs transition-colors duration-500"
-                        style={{
-                            backgroundColor: isHealthMode ? '#dbeafe' : 'rgba(37, 99, 235, 0.1)',
-                            borderColor: isHealthMode ? '#93c5fd' : 'rgba(59, 130, 246, 0.3)'
-                        }}
-                    >
-                        <p className="font-medium transition-colors duration-500" style={{ color: isHealthMode ? '#1e40af' : '#93c5fd' }}>
-                            Modelo recomendado:
-                        </p>
-                        <p className="mt-0.5 transition-colors duration-500" style={{ color: isHealthMode ? '#1e3a8a' : '#bfdbfe' }}>
-                            {currentSectorInfo.recommendedModel === 'gemini-2.5-pro' ? 'Gemini 2.5 Pro' : 'Gemini 2.5 Flash'}
-                        </p>
-                    </div>
-                )}
-            </div>
-
             <div
                 className="flex-1 overflow-y-auto p-4 space-y-6"
                 style={{
                     backgroundColor: isHealthMode ? '#f0fdf4' : 'transparent'
                 }}
             >
-                {/* Plantillas del sector seleccionado */}
-                {filteredTemplates.length > 0 ? (
-                    <div>
-                        <h3
-                            className="text-sm font-bold mb-3 flex items-center gap-2 transition-colors duration-500"
-                            style={{ color: textColor }}
+                {/* Botones de Crear y Guardar Plantilla juntos */}
+                {!isCreatingTemplate ? (
+                    <div className="space-y-2">
+                        <button
+                            onClick={() => setIsCreatingTemplate(true)}
+                            className="w-full p-2 border border-dashed rounded transition-all flex items-center justify-center gap-2 font-medium text-sm hover:opacity-90"
+                            style={{
+                                backgroundColor: isHealthMode ? '#d1fae5' : 'rgba(6, 182, 212, 0.2)',
+                                borderColor: isHealthMode ? '#6ee7b7' : 'rgba(34, 211, 238, 0.5)',
+                                color: isHealthMode ? '#047857' : '#22d3ee'
+                            }}
                         >
-                            <span className="text-lg">{currentSectorInfo?.icon}</span>
-                            Plantillas de {currentSectorInfo?.name}
-                        </h3>
-                        <div className="space-y-2">
-                            {filteredTemplates.map(template => (
-                                <TemplateCard key={template.id} template={template} />
-                            ))}
-                        </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span>Crear Plantilla</span>
+                        </button>
+
+                        {/* Botón para guardar plantilla actual del editor */}
+                        {currentSchema && currentPrompt && (
+                            <button
+                                onClick={() => setShowSaveDialog(true)}
+                                className="w-full p-2 border rounded transition-all flex items-center justify-center gap-2 font-medium text-sm hover:opacity-90"
+                                style={{
+                                    backgroundColor: isHealthMode ? '#f3e8ff' : 'rgba(147, 51, 234, 0.2)',
+                                    borderColor: isHealthMode ? '#c084fc' : 'rgba(168, 85, 247, 0.5)',
+                                    color: isHealthMode ? '#7c3aed' : '#e9d5ff'
+                                }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                </svg>
+                                <span>Guardar Plantilla</span>
+                            </button>
+                        )}
+
+                        {/* Dialog para guardar plantilla actual */}
+                        {showSaveDialog && (
+                            <div className="p-3 rounded-lg border space-y-2" style={{
+                                backgroundColor: isHealthMode ? '#f9fafb' : 'rgba(51, 65, 85, 0.5)',
+                                borderColor: isHealthMode ? '#d1d5db' : '#475569'
+                            }}>
+                                <input
+                                    type="text"
+                                    placeholder="Nombre de la plantilla"
+                                    value={newTemplateName}
+                                    onChange={(e) => setNewTemplateName(e.target.value)}
+                                    className="w-full rounded px-2 py-1.5 text-sm"
+                                    style={{
+                                        backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                        borderWidth: '1px',
+                                        borderStyle: 'solid',
+                                        borderColor: isHealthMode ? '#d1d5db' : '#475569',
+                                        color: textColor
+                                    }}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Descripción (opcional)"
+                                    value={newTemplateDescription}
+                                    onChange={(e) => setNewTemplateDescription(e.target.value)}
+                                    className="w-full rounded px-2 py-1.5 text-sm"
+                                    style={{
+                                        backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                        borderWidth: '1px',
+                                        borderStyle: 'solid',
+                                        borderColor: isHealthMode ? '#d1d5db' : '#475569',
+                                        color: textColor
+                                    }}
+                                />
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleSaveTemplate}
+                                        disabled={!newTemplateName.trim()}
+                                        className="flex-1 px-2 py-1.5 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:opacity-90"
+                                        style={{
+                                            backgroundColor: isHealthMode ? '#7c3aed' : '#a855f7',
+                                            color: '#ffffff'
+                                        }}
+                                    >
+                                        Guardar
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowSaveDialog(false);
+                                            setNewTemplateName('');
+                                            setNewTemplateDescription('');
+                                        }}
+                                        className="flex-1 px-2 py-1.5 rounded text-sm font-medium transition-colors hover:opacity-80"
+                                        style={{
+                                            backgroundColor: isHealthMode ? '#e5e7eb' : '#475569',
+                                            color: isHealthMode ? '#374151' : '#f1f5f9'
+                                        }}
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ) : (
-                    <div className="text-center py-8 text-sm transition-colors duration-500" style={{ color: textSecondary }}>
-                        <p>No hay plantillas para este sector</p>
+                    <div className="space-y-3">
+                        {/* Header con título y botón cancelar */}
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-semibold transition-colors" style={{ color: textColor }}>
+                                Nueva Plantilla
+                            </h3>
+                            <button
+                                onClick={() => {
+                                    setIsCreatingTemplate(false);
+                                    setNewSchema([{ id: `field-${Date.now()}`, name: '', type: 'STRING' }]);
+                                    setNewPrompt('Extrae la información clave del siguiente documento según el esquema JSON proporcionado.');
+                                }}
+                                className="text-xs px-2 py-1 rounded transition-colors hover:opacity-80"
+                                style={{
+                                    backgroundColor: isHealthMode ? '#fee2e2' : 'rgba(239, 68, 68, 0.2)',
+                                    color: isHealthMode ? '#dc2626' : '#f87171'
+                                }}
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+
+                        {/* Formulario de nombre y descripción */}
+                        <div className="space-y-2">
+                            <div>
+                                <label className="block text-xs font-medium mb-1 transition-colors" style={{ color: textColor }}>
+                                    Nombre
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: Factura Médica"
+                                    value={newTemplateName}
+                                    onChange={(e) => setNewTemplateName(e.target.value)}
+                                    className="w-full rounded px-2 py-1.5 text-sm transition-colors"
+                                    style={{
+                                        backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                        borderWidth: '1px',
+                                        borderStyle: 'solid',
+                                        borderColor: borderColor,
+                                        color: textColor
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium mb-1 transition-colors" style={{ color: textColor }}>
+                                    Descripción (opcional)
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Breve descripción"
+                                    value={newTemplateDescription}
+                                    onChange={(e) => setNewTemplateDescription(e.target.value)}
+                                    className="w-full rounded px-2 py-1.5 text-sm transition-colors"
+                                    style={{
+                                        backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                        borderWidth: '1px',
+                                        borderStyle: 'solid',
+                                        borderColor: borderColor,
+                                        color: textColor
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium mb-1 transition-colors" style={{ color: textColor }}>
+                                    Prompt
+                                </label>
+                                <textarea
+                                    value={newPrompt}
+                                    onChange={(e) => setNewPrompt(e.target.value)}
+                                    rows={2}
+                                    className="w-full rounded px-2 py-1.5 text-sm transition-colors"
+                                    style={{
+                                        backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                        borderWidth: '1px',
+                                        borderStyle: 'solid',
+                                        borderColor: borderColor,
+                                        color: textColor
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Schema Builder */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="block text-xs font-medium transition-colors" style={{ color: textColor }}>
+                                    Campos del Esquema
+                                </label>
+                                <button
+                                    onClick={handleGenerateSchemaFromPrompt}
+                                    disabled={isGeneratingSchema || !newPrompt.trim()}
+                                    className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                                    style={{
+                                        backgroundColor: isHealthMode ? '#047857' : '#06b6d4',
+                                        color: '#ffffff'
+                                    }}
+                                >
+                                    {isGeneratingSchema ? (
+                                        <>
+                                            <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            ...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <SparklesIcon className="w-3 h-3" />
+                                            Generar desde Prompt
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                            <SchemaBuilder
+                                schema={newSchema}
+                                setSchema={setNewSchema}
+                                theme={theme}
+                                isHealthMode={isHealthMode}
+                            />
+                        </div>
+
+                        {/* Botón guardar */}
+                        <button
+                            onClick={handleSaveTemplate}
+                            disabled={!newTemplateName.trim() || newSchema.length === 0}
+                            className="w-full py-1.5 rounded font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                            style={{
+                                backgroundColor: isHealthMode ? '#047857' : '#06b6d4',
+                                color: '#ffffff'
+                            }}
+                        >
+                            Guardar
+                        </button>
                     </div>
                 )}
 
-                {/* Modelos Guardados */}
-                <div>
+                {/* Plantillas del sector seleccionado - solo mostrar si NO estamos creando */}
+                {!isCreatingTemplate && (
+                    <>
+                        {filteredTemplates.length > 0 ? (
+                            <div>
+                                <h3
+                                    className="text-sm font-bold mb-3 flex items-center gap-2 transition-colors duration-500"
+                                    style={{ color: textColor }}
+                                >
+                                    <span className="text-lg">{currentSectorInfo?.icon}</span>
+                                    Plantillas de {currentSectorInfo?.name}
+                                </h3>
+                                <div className="space-y-2">
+                                    {filteredTemplates.map(template => (
+                                        <TemplateCard key={template.id} template={template} />
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-sm transition-colors duration-500" style={{ color: textSecondary }}>
+                                <p>No hay plantillas para este sector</p>
+                            </div>
+                        )}
+
+                        {/* Modelos Guardados */}
+                        <div>
                     <div className="flex items-center justify-between mb-3">
                         <h3
                             className="text-sm font-bold flex items-center gap-2 transition-colors duration-500"
@@ -485,63 +594,6 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                         </button>
                     </div>
 
-                    {/* Botón para guardar nueva plantilla */}
-                    {currentSchema && currentPrompt && (
-                        <button
-                            onClick={() => setShowSaveDialog(true)}
-                            className="w-full mb-3 p-3 border-2 rounded-lg transition-all flex items-center justify-center gap-2 font-bold hover:opacity-90"
-                            style={{
-                                backgroundColor: isHealthMode ? '#f3e8ff' : 'rgba(147, 51, 234, 0.2)',
-                                borderColor: isHealthMode ? '#c084fc' : 'rgba(168, 85, 247, 0.5)',
-                                color: isHealthMode ? '#7c3aed' : '#e9d5ff'
-                            }}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            Guardar Plantilla Actual
-                        </button>
-                    )}
-
-                    {/* Dialog para guardar plantilla */}
-                    {showSaveDialog && (
-                        <div className="mb-3 p-3 bg-slate-700/50 border border-slate-600 rounded-lg space-y-2">
-                            <input
-                                type="text"
-                                placeholder="Nombre de la plantilla"
-                                value={newTemplateName}
-                                onChange={(e) => setNewTemplateName(e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm text-slate-200"
-                            />
-                            <input
-                                type="text"
-                                placeholder="Descripción (opcional)"
-                                value={newTemplateDescription}
-                                onChange={(e) => setNewTemplateDescription(e.target.value)}
-                                className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm text-slate-200"
-                            />
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleSaveTemplate}
-                                    disabled={!newTemplateName.trim()}
-                                    className="flex-1 px-3 py-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm transition-colors"
-                                >
-                                    Guardar
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setShowSaveDialog(false);
-                                        setNewTemplateName('');
-                                        setNewTemplateDescription('');
-                                    }}
-                                    className="flex-1 px-3 py-1 bg-slate-600 hover:bg-slate-500 text-white rounded text-sm transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
                     {activeCustomTemplates.length > 0 ? (
                         <div className="space-y-2">
                             {activeCustomTemplates.map(template => (
@@ -555,6 +607,86 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                         </div>
                     )}
                 </div>
+                    </>
+                )}
+
+                {/* Selector de Sectores, Certificaciones y Modelo - Al final */}
+                {!isCreatingTemplate && (
+                    <div
+                        className="p-4 border-t transition-colors duration-500"
+                        style={{
+                            backgroundColor: isHealthMode ? '#f0fdf4' : 'rgba(15, 23, 42, 0.5)',
+                            borderTopColor: borderColor
+                        }}
+                    >
+                        <label
+                            htmlFor="sector-select"
+                            className="block text-sm font-medium mb-2 transition-colors duration-500"
+                            style={{ color: textColor }}
+                        >
+                            Filtrar por Sector
+                        </label>
+                        <select
+                            id="sector-select"
+                            value={selectedSector}
+                            onChange={(e) => handleSectorChange(e.target.value as Sector)}
+                            className="w-full rounded-md p-2 text-sm transition-colors duration-500"
+                            style={{
+                                backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                borderColor: borderColor,
+                                color: textColor,
+                                border: `1px solid ${borderColor}`
+                            }}
+                        >
+                            {SECTORS.map(sector => (
+                                <option key={sector.id} value={sector.id}>
+                                    {sector.icon} {sector.name}
+                                </option>
+                            ))}
+                        </select>
+                        {currentSectorInfo?.description && (
+                            <p className="text-xs mt-1 transition-colors duration-500" style={{ color: textSecondary }}>
+                                {currentSectorInfo.description}
+                            </p>
+                        )}
+
+                        {/* Mostrar info de certificaciones para sector Salud */}
+                        {selectedSector === 'salud' && currentSectorInfo?.certifications && (
+                            <button
+                                onClick={() => setShowCertificationsModal(true)}
+                                className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 hover:opacity-90 border-2 rounded-md transition-all text-xs font-semibold"
+                                style={{
+                                    backgroundColor: '#d1fae5',
+                                    borderColor: '#6ee7b7',
+                                    color: '#047857'
+                                }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                                Ver Certificaciones HIPAA
+                            </button>
+                        )}
+
+                        {/* Modelo recomendado */}
+                        {currentSectorInfo?.recommendedModel && (
+                            <div
+                                className="mt-3 p-2 border rounded text-xs transition-colors duration-500"
+                                style={{
+                                    backgroundColor: isHealthMode ? '#dbeafe' : 'rgba(37, 99, 235, 0.1)',
+                                    borderColor: isHealthMode ? '#93c5fd' : 'rgba(59, 130, 246, 0.3)'
+                                }}
+                            >
+                                <p className="font-medium transition-colors duration-500" style={{ color: isHealthMode ? '#1e40af' : '#93c5fd' }}>
+                                    Modelo recomendado:
+                                </p>
+                                <p className="mt-0.5 transition-colors duration-500" style={{ color: isHealthMode ? '#1e3a8a' : '#bfdbfe' }}>
+                                    {currentSectorInfo.recommendedModel === 'gemini-2.5-pro' ? 'Gemini 2.5 Pro' : 'Gemini 2.5 Flash'}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Modal de Certificaciones HIPAA */}

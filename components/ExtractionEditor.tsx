@@ -7,7 +7,7 @@ import { SchemaBuilder } from './SchemaBuilder.tsx';
 import { ImageSearchPanel } from './ImageSearchPanel.tsx';
 import { CubeIcon, ExclamationTriangleIcon, SparklesIcon } from './Icons.tsx';
 import { downloadCSV, downloadExcel, downloadJSON, downloadPDF, generatePDFPreviewURL } from '../utils/exportUtils.ts';
-import { AVAILABLE_MODELS, type GeminiModel, searchImageInDocument } from '../services/geminiService.ts';
+import { AVAILABLE_MODELS, type GeminiModel, searchImageInDocument, generateSchemaFromPrompt } from '../services/geminiService.ts';
 import { HealthSchemaViewer } from './HealthSchemaViewer.tsx';
 
 interface ExtractionEditorProps {
@@ -51,6 +51,8 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
     const [isSearchingImage, setIsSearchingImage] = useState(false);
     const [imageSearchResult, setImageSearchResult] = useState<any>(null);
     const [showImageSearch, setShowImageSearch] = useState(false);
+    const [showPrompt, setShowPrompt] = useState(true); // Prompt EXPANDIDO por defecto para visibilidad
+    const [isGeneratingSchema, setIsGeneratingSchema] = useState(false);
 
     const cardBg = isHealthMode ? '#ffffff' : 'rgba(30, 41, 59, 0.5)';
     const borderColor = isHealthMode ? theme?.border || '#6ee7b7' : 'rgba(51, 65, 85, 0.5)';
@@ -117,6 +119,24 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
         setSchema(newSchema);
     };
 
+    const handleGenerateSchema = async () => {
+        if (!prompt.trim()) {
+            alert('Por favor, escribe primero un prompt describiendo qué datos quieres extraer.');
+            return;
+        }
+
+        setIsGeneratingSchema(true);
+        try {
+            const generatedFields = await generateSchemaFromPrompt(prompt, selectedModel);
+            setSchema(generatedFields);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+            alert(`Error al generar campos: ${errorMessage}`);
+        } finally {
+            setIsGeneratingSchema(false);
+        }
+    };
+
     if (!file) {
         return (
             <div
@@ -153,71 +173,114 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
             </div>
 
             <div className="flex-grow p-4 md:p-6 overflow-y-auto space-y-6">
+                {/* Prompt colapsable */}
                 <div>
-                    <div className="flex justify-between items-center mb-2">
-                        <label htmlFor="prompt" className="block text-base font-medium" style={{ color: textColor }}>
-                            1. Prompt (Instrucción)
-                        </label>
-                         <button
-                            onClick={useExample}
-                            className="text-sm hover:opacity-80 transition-all flex items-center gap-1"
-                            style={{ color: accentColor }}
-                        >
-                            <SparklesIcon className="w-4 h-4" />
-                            Usar Ejemplo
-                        </button>
-                    </div>
-                    <textarea
-                        id="prompt"
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        rows={4}
-                        className="w-full rounded-md p-3 focus:ring-2 focus:outline-none transition-all text-sm"
-                        style={{
-                            backgroundColor: isHealthMode ? '#f9fafb' : '#0f172a',
-                            borderWidth: '1px',
-                            borderStyle: 'solid',
-                            borderColor: isHealthMode ? '#d1d5db' : '#475569',
-                            color: textColor
-                        }}
-                        placeholder="Ej: Extrae los detalles de la factura del documento."
-                    />
-                </div>
-
-                <div>
-                    <label htmlFor="model-select" className="block text-base font-medium mb-2" style={{ color: textColor }}>
-                        2. Modelo de IA
-                    </label>
-                    <select
-                        id="model-select"
-                        value={selectedModel}
-                        onChange={(e) => setSelectedModel(e.target.value as GeminiModel)}
-                        className="w-full rounded-md p-3 focus:ring-2 focus:outline-none transition-all text-sm"
-                        style={{
-                            backgroundColor: isHealthMode ? '#f9fafb' : '#0f172a',
-                            borderWidth: '1px',
-                            borderStyle: 'solid',
-                            borderColor: isHealthMode ? '#d1d5db' : '#475569',
-                            color: textColor
-                        }}
+                    <button
+                        onClick={() => setShowPrompt(!showPrompt)}
+                        className="flex items-center justify-between w-full text-left mb-2"
                     >
-                        {AVAILABLE_MODELS.map(model => (
-                            <option key={model.id} value={model.id}>
-                                {model.name} - {model.bestFor}
-                            </option>
-                        ))}
-                    </select>
-                    <p className="text-xs mt-1" style={{ color: textSecondary }}>
-                        {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.description}
-                    </p>
+                        <div className="flex items-center gap-2">
+                            <label className="text-base font-medium flex items-center gap-2 cursor-pointer" style={{ color: textColor }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" style={{ color: accentColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                1. Prompt (Instrucción)
+                            </label>
+                            <span className="text-xs px-2 py-0.5 rounded font-medium" style={{
+                                backgroundColor: isHealthMode ? '#d1fae5' : 'rgba(6, 182, 212, 0.2)',
+                                color: isHealthMode ? '#047857' : '#22d3ee'
+                            }}>
+                                Editable ✏️
+                            </span>
+                        </div>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`h-5 w-5 transition-transform ${showPrompt ? 'rotate-180' : ''}`}
+                            style={{ color: textSecondary }}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    {showPrompt && (
+                        <>
+                            <div className="mb-3 p-3 rounded-lg border" style={{
+                                backgroundColor: isHealthMode ? '#ecfdf5' : 'rgba(6, 182, 212, 0.1)',
+                                borderColor: isHealthMode ? '#6ee7b7' : 'rgba(34, 211, 238, 0.3)'
+                            }}>
+                                <p className="text-xs font-medium" style={{ color: isHealthMode ? '#047857' : '#22d3ee' }}>
+                                    💡 <strong>Importante:</strong> Personaliza esta instrucción para describir QUÉ información quieres extraer.
+                                </p>
+                                <p className="text-xs mt-1" style={{ color: textSecondary }}>
+                                    Sé específico: menciona campos como "nombre del paciente", "diagnóstico", "fecha", etc.
+                                </p>
+                            </div>
+                            <div className="flex justify-end mb-2">
+                                <button
+                                    onClick={useExample}
+                                    className="text-sm hover:opacity-80 transition-all flex items-center gap-1"
+                                    style={{ color: accentColor }}
+                                >
+                                    <SparklesIcon className="w-4 h-4" />
+                                    Usar Ejemplo
+                                </button>
+                            </div>
+                            <textarea
+                                id="prompt"
+                                value={prompt}
+                                onChange={(e) => setPrompt(e.target.value)}
+                                rows={4}
+                                className="w-full rounded-md p-3 focus:ring-2 focus:outline-none transition-all text-sm"
+                                style={{
+                                    backgroundColor: isHealthMode ? '#f9fafb' : '#0f172a',
+                                    borderWidth: '1px',
+                                    borderStyle: 'solid',
+                                    borderColor: isHealthMode ? '#d1d5db' : '#475569',
+                                    color: textColor
+                                }}
+                                placeholder="Ej: Extrae del informe médico: nombre del paciente, fecha de consulta, diagnóstico principal y tratamiento prescrito."
+                            />
+                        </>
+                    )}
                 </div>
 
                 <div>
-                    <h3 className="text-base font-medium mb-2" style={{ color: textColor }}>3. Definición del Esquema JSON</h3>
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-base font-medium" style={{ color: textColor }}>2. Definición del Esquema JSON</h3>
+                        {!(template && 'secciones' in template) && (
+                            <button
+                                onClick={handleGenerateSchema}
+                                disabled={isGeneratingSchema || !prompt.trim()}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                                style={{
+                                    backgroundColor: isHealthMode ? '#047857' : '#06b6d4',
+                                    color: '#ffffff'
+                                }}
+                            >
+                                {isGeneratingSchema ? (
+                                    <>
+                                        <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Generando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <SparklesIcon className="w-3.5 h-3.5" />
+                                        Generar Campos desde Prompt
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </div>
                     {template && 'secciones' in template ? (
-                        <HealthSchemaViewer template={template} onUpdate={onUpdateTemplate} />
+                        <HealthSchemaViewer template={template} onUpdate={onUpdateTemplate} theme={theme} isHealthMode={isHealthMode} />
                     ) : (
-                        <SchemaBuilder schema={schema} setSchema={setSchema} />
+                        <SchemaBuilder schema={schema} setSchema={setSchema} theme={theme} isHealthMode={isHealthMode} />
                     )}
                 </div>
 
@@ -231,7 +294,7 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" style={{ color: accentColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            4. Búsqueda de Imágenes/Logos (Opcional)
+                            3. Búsqueda de Imágenes/Logos (Opcional)
                         </h3>
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

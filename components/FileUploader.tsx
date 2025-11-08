@@ -131,7 +131,11 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, act
                 onDragOver={onDragOver}
                 onDrop={onDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragging ? 'border-cyan-400 bg-slate-700/50' : 'border-slate-600 hover:border-slate-500'}`}
+                style={{
+                    borderColor: isDragging ? accentColor : (isHealthMode ? '#a7f3d0' : '#475569'),
+                    backgroundColor: isDragging ? (isHealthMode ? '#d1fae5' : 'rgba(71, 85, 105, 0.5)') : 'transparent'
+                }}
+                className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer transition-colors hover:border-opacity-70"
             >
                 <input
                     ref={fileInputRef}
@@ -141,44 +145,55 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, act
                     className="hidden"
                     accept=".pdf,.jpg,.jpeg,.png,.tiff,.txt"
                 />
-                <UploadCloudIcon className="w-10 h-10 text-slate-400 mb-2" />
-                <p className="text-slate-300 text-center">
-                    <span className="font-semibold text-cyan-400">Haga clic para subir</span> o arrastre y suelte
+                <UploadCloudIcon className="w-10 h-10 mb-2" style={{ color: isHealthMode ? '#6ee7b7' : '#94a3b8' }} />
+                <p className="text-center" style={{ color: textColor }}>
+                    <span className="font-semibold" style={{ color: accentColor }}>Haga clic para subir</span> o arrastre y suelte
                 </p>
-                <p className="text-xs text-slate-500 text-center">PDF, JPG, PNG, TIFF, TXT (máx. 200MB/lote)</p>
+                <p className="text-xs text-center" style={{ color: textSecondary }}>PDF, JPG, PNG, TIFF, TXT (máx. 200MB/lote)</p>
             </div>
 
             {files.length > 0 && (
                 <div className="mt-4 flex flex-col flex-grow min-h-0">
                     <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-sm font-semibold text-slate-300">Archivos Cargados ({files.length})</h3>
+                        <h3 className="text-sm font-semibold" style={{ color: textColor }}>Archivos Cargados ({files.length})</h3>
                         <div className="flex gap-2">
                             {onExtractAll && (
                                 <button
                                     onClick={onExtractAll}
                                     disabled={isLoading || !files.some(f => f.status === 'pendiente' || f.status === 'error')}
-                                    className="text-xs px-3 py-1 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-md transition-colors"
+                                    className="text-xs px-3 py-1 text-white rounded-md transition-colors"
+                                    style={{
+                                        backgroundColor: isLoading || !files.some(f => f.status === 'pendiente' || f.status === 'error')
+                                            ? (isHealthMode ? '#d1d5db' : '#334155')
+                                            : accentColor
+                                    }}
                                 >
                                     {isLoading ? 'Procesando...' : 'Procesar Todos'}
                                 </button>
                             )}
-                            <button onClick={onClearAll} className="text-xs text-red-400 hover:text-red-300 transition-colors">Limpiar Todo</button>
+                            <button onClick={onClearAll} className="text-xs transition-colors" style={{ color: isHealthMode ? '#dc2626' : '#f87171' }}>Limpiar Todo</button>
                         </div>
                     </div>
                     <div className="overflow-y-auto pr-2 flex-grow">
                         <ul className="space-y-2">
                             {files.map(f => (
                                 <li key={f.id}>
-                                    <button 
+                                    <button
                                         onClick={() => onFileSelect(f.id)}
-                                        className={`w-full text-left p-2 rounded-md transition-all duration-200 border-l-4 ${activeFileId === f.id ? 'bg-cyan-900/50 border-cyan-400' : 'bg-slate-700/30 border-transparent hover:bg-slate-700/60'}`}
+                                        className="w-full text-left p-2 rounded-md transition-all duration-200 border-l-4"
+                                        style={{
+                                            backgroundColor: activeFileId === f.id
+                                                ? (isHealthMode ? '#d1fae5' : 'rgba(8, 145, 178, 0.2)')
+                                                : (isHealthMode ? '#f0fdf4' : 'rgba(51, 65, 85, 0.3)'),
+                                            borderLeftColor: activeFileId === f.id ? accentColor : 'transparent'
+                                        }}
                                     >
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <FileIcon className="w-6 h-6 text-slate-400 flex-shrink-0" />
+                                                <FileIcon className="w-6 h-6 flex-shrink-0" style={{ color: isHealthMode ? '#6ee7b7' : '#94a3b8' }} />
                                                 <div className="flex-grow min-w-0">
-                                                    <p className="text-sm font-medium text-slate-200 truncate">{f.file.name}</p>
-                                                    <p className="text-xs text-slate-400">{formatBytes(f.file.size)}</p>
+                                                    <p className="text-sm font-medium truncate" style={{ color: textColor }}>{f.file.name}</p>
+                                                    <p className="text-xs" style={{ color: textSecondary }}>{formatBytes(f.file.size)}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3 flex-shrink-0">
@@ -189,13 +204,18 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ files, setFiles, act
                                                             e.stopPropagation();
                                                             onViewFile(f.file);
                                                         }}
-                                                        className="p-1 text-slate-500 hover:text-cyan-400 transition-colors rounded-full"
+                                                        className="p-1 transition-colors rounded-full"
+                                                        style={{ color: textSecondary }}
                                                         title="Ver documento"
                                                     >
                                                         <EyeIcon className="w-4 h-4" />
                                                     </button>
                                                 )}
-                                                <button onClick={(e) => onRemoveFile(f.id, e)} className="p-1 text-slate-500 hover:text-red-400 transition-colors rounded-full">
+                                                <button
+                                                    onClick={(e) => onRemoveFile(f.id, e)}
+                                                    className="p-1 transition-colors rounded-full"
+                                                    style={{ color: textSecondary }}
+                                                >
                                                     <TrashIcon className="w-4 h-4" />
                                                 </button>
                                             </div>
