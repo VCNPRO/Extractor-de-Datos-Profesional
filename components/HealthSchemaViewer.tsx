@@ -5,7 +5,7 @@ interface HealthSchemaViewerProps {
   template: HealthTemplate;
   onUpdate: (sectionId: string, fieldName: string, newLabel: string) => void;
   theme?: any;
-  isHealthMode?: boolean;
+  isLightMode?: boolean;
 }
 
 const FieldRenderer: React.FC<{
@@ -13,13 +13,13 @@ const FieldRenderer: React.FC<{
   campo: Field,
   onUpdate: (sectionId: string, fieldName: string, newLabel: string) => void,
   theme?: any,
-  isHealthMode?: boolean
-}> = ({ seccion, campo, onUpdate, theme, isHealthMode }) => {
-  const textColor = isHealthMode ? (theme?.text || '#064e3b') : '#f1f5f9';
-  const bgColor = isHealthMode ? '#f9fafb' : '#1e293b';
-  const borderColor = isHealthMode ? '#d1d5db' : '#475569';
-  const rowBg = isHealthMode ? '#f0fdf4' : 'rgba(51, 65, 85, 0.3)';
-  const textSecondary = isHealthMode ? (theme?.textSecondary || '#065f46') : '#94a3b8';
+  isLightMode?: boolean
+}> = ({ seccion, campo, onUpdate, theme, isLightMode }) => {
+  const textColor = isLightMode ? '#1e3a8a' : '#f1f5f9';
+  const bgColor = isLightMode ? '#f9fafb' : '#1e293b';
+  const borderColor = isLightMode ? '#dbeafe' : '#475569';
+  const rowBg = isLightMode ? '#eff6ff' : 'rgba(51, 65, 85, 0.3)';
+  const textSecondary = isLightMode ? '#475569' : '#94a3b8';
   switch (campo.tipo_dato) {
     case 'seleccion':
       return (
@@ -104,10 +104,10 @@ const FieldRenderer: React.FC<{
 };
 
 export const HealthSchemaViewer: React.FC<HealthSchemaViewerProps> = ({ template, onUpdate, theme, isHealthMode }) => {
-  const textColor = isHealthMode ? (theme?.text || '#064e3b') : '#f1f5f9';
-  const borderColor = isHealthMode ? (theme?.border || '#6ee7b7') : '#475569';
-  const textSecondary = isHealthMode ? (theme?.textSecondary || '#065f46') : '#94a3b8';
-  const sectionBg = isHealthMode ? '#ffffff' : 'rgba(30, 41, 59, 0.3)';
+  const textColor = isLightMode ? '#1e3a8a' : '#f1f5f9';
+  const borderColor = isLightMode ? '#dbeafe' : '#475569';
+  const textSecondary = isLightMode ? '#475569' : '#94a3b8';
+  const sectionBg = isLightMode ? '#ffffff' : 'rgba(30, 41, 59, 0.3)';
 
   return (
     <div className="space-y-6">
@@ -117,7 +117,7 @@ export const HealthSchemaViewer: React.FC<HealthSchemaViewerProps> = ({ template
           <p className="text-sm mb-4" style={{ color: textSecondary }}>{seccion.descripcion}</p>
           <div className="space-y-4">
             {seccion.campos.map(campo => (
-              <FieldRenderer key={campo.nombre_campo} seccion={seccion} campo={campo} onUpdate={onUpdate} theme={theme} isHealthMode={isHealthMode} />
+              <FieldRenderer key={campo.nombre_campo} seccion={seccion} campo={campo} onUpdate={onUpdate} theme={theme} isLightMode={isLightMode} />
             ))}
           </div>
         </div>

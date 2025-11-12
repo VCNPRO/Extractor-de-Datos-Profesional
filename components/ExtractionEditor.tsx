@@ -21,7 +21,7 @@ interface ExtractionEditorProps {
     onExtract: (modelId?: GeminiModel) => void;
     isLoading: boolean;
     theme?: any;
-    isHealthMode?: boolean;
+    isLightMode?: boolean;
 }
 
 // Example prompt
@@ -45,7 +45,7 @@ const EXAMPLE_SCHEMA: SchemaField[] = [
 ];
 
 
-export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, template, onUpdateTemplate, schema, setSchema, prompt, setPrompt, onExtract, isLoading, theme, isHealthMode }) => {
+export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, template, onUpdateTemplate, schema, setSchema, prompt, setPrompt, onExtract, isLoading, theme, isLightMode }) => {
     const [pdfPreviewURL, setPdfPreviewURL] = useState<string | null>(null);
     const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-flash');
     const [isSearchingImage, setIsSearchingImage] = useState(false);
@@ -54,11 +54,11 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
     const [showPrompt, setShowPrompt] = useState(true); // Prompt EXPANDIDO por defecto para visibilidad
     const [isGeneratingSchema, setIsGeneratingSchema] = useState(false);
 
-    const cardBg = isHealthMode ? '#ffffff' : 'rgba(30, 41, 59, 0.5)';
-    const borderColor = isHealthMode ? theme?.border || '#6ee7b7' : 'rgba(51, 65, 85, 0.5)';
-    const textColor = isHealthMode ? theme?.text || '#064e3b' : '#f1f5f9';
-    const textSecondary = isHealthMode ? theme?.textSecondary || '#065f46' : '#94a3b8';
-    const accentColor = isHealthMode ? theme?.primary || '#047857' : '#06b6d4';
+    const cardBg = isLightMode ? '#ffffff' : 'rgba(30, 41, 59, 0.5)';
+    const borderColor = isLightMode ? '#dbeafe' : 'rgba(51, 65, 85, 0.5)';
+    const textColor = isLightMode ? '#1e3a8a' : '#f1f5f9';
+    const textSecondary = isLightMode ? '#475569' : '#94a3b8';
+    const accentColor = isLightMode ? '#2563eb' : '#06b6d4';
 
     // When the active file changes, clear previous results.
     // The schema and prompt are managed by App.tsx so they persist.
@@ -187,8 +187,8 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
                                 1. Prompt (Instrucción)
                             </label>
                             <span className="text-xs px-2 py-0.5 rounded font-medium" style={{
-                                backgroundColor: isHealthMode ? '#d1fae5' : 'rgba(6, 182, 212, 0.2)',
-                                color: isHealthMode ? '#047857' : '#22d3ee'
+                                backgroundColor: isLightMode ? '#dbeafe' : 'rgba(6, 182, 212, 0.2)',
+                                color: isLightMode ? '#1e3a8a' : '#22d3ee'
                             }}>
                                 Editable ✏️
                             </span>
@@ -208,10 +208,10 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
                     {showPrompt && (
                         <>
                             <div className="mb-3 p-3 rounded-lg border" style={{
-                                backgroundColor: isHealthMode ? '#ecfdf5' : 'rgba(6, 182, 212, 0.1)',
-                                borderColor: isHealthMode ? '#6ee7b7' : 'rgba(34, 211, 238, 0.3)'
+                                backgroundColor: isLightMode ? '#eff6ff' : 'rgba(6, 182, 212, 0.1)',
+                                borderColor: isLightMode ? '#93c5fd' : 'rgba(34, 211, 238, 0.3)'
                             }}>
-                                <p className="text-xs font-medium" style={{ color: isHealthMode ? '#047857' : '#22d3ee' }}>
+                                <p className="text-xs font-medium" style={{ color: isLightMode ? '#1e3a8a' : '#22d3ee' }}>
                                     💡 <strong>Importante:</strong> Personaliza esta instrucción para describir QUÉ información quieres extraer.
                                 </p>
                                 <p className="text-xs mt-1" style={{ color: textSecondary }}>
@@ -235,10 +235,10 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
                                 rows={4}
                                 className="w-full rounded-md p-3 focus:ring-2 focus:outline-none transition-all text-sm"
                                 style={{
-                                    backgroundColor: isHealthMode ? '#f9fafb' : '#0f172a',
+                                    backgroundColor: isLightMode ? '#f9fafb' : '#0f172a',
                                     borderWidth: '1px',
                                     borderStyle: 'solid',
-                                    borderColor: isHealthMode ? '#d1d5db' : '#475569',
+                                    borderColor: isLightMode ? '#d1d5db' : '#475569',
                                     color: textColor
                                 }}
                                 placeholder="Ej: Extrae del informe médico: nombre del paciente, fecha de consulta, diagnóstico principal y tratamiento prescrito."
@@ -256,7 +256,7 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
                                 disabled={isGeneratingSchema || !prompt.trim()}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
                                 style={{
-                                    backgroundColor: isHealthMode ? '#047857' : '#06b6d4',
+                                    backgroundColor: isLightMode ? '#2563eb' : '#06b6d4',
                                     color: '#ffffff'
                                 }}
                             >
@@ -278,9 +278,9 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
                         )}
                     </div>
                     {template && 'secciones' in template ? (
-                        <HealthSchemaViewer template={template} onUpdate={onUpdateTemplate} theme={theme} isHealthMode={isHealthMode} />
+                        <HealthSchemaViewer template={template} onUpdate={onUpdateTemplate} theme={theme} isLightMode={isLightMode} />
                     ) : (
-                        <SchemaBuilder schema={schema} setSchema={setSchema} theme={theme} isHealthMode={isHealthMode} />
+                        <SchemaBuilder schema={schema} setSchema={setSchema} theme={theme} isLightMode={isLightMode} />
                     )}
                 </div>
 
@@ -320,7 +320,7 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
                             {imageSearchResult && (
                                 <div className={`mt-4 p-4 rounded-lg border ${imageSearchResult.found ? 'bg-green-900/20 border-green-700/50' : ''}`}
                                     style={{
-                                        backgroundColor: imageSearchResult.found ? undefined : (isHealthMode ? '#f3f4f6' : 'rgba(30, 41, 59, 0.5)'),
+                                        backgroundColor: imageSearchResult.found ? undefined : (isLightMode ? '#f3f4f6' : 'rgba(30, 41, 59, 0.5)'),
                                         borderColor: imageSearchResult.found ? undefined : borderColor
                                     }}
                                 >
@@ -358,7 +358,7 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
                 </div>
             </div>
 
-            <div className="p-4 md:p-6 border-t transition-colors duration-500" style={{ borderTopColor: borderColor, backgroundColor: isHealthMode ? '#f9fafb' : 'rgba(30, 41, 59, 0.8)' }}>
+            <div className="p-4 md:p-6 border-t transition-colors duration-500" style={{ borderTopColor: borderColor, backgroundColor: isLightMode ? '#f9fafb' : 'rgba(30, 41, 59, 0.8)' }}>
                 <button
                     onClick={() => onExtract(selectedModel)}
                     disabled={isLoading || !file || hasSchemaErrors || schema.length === 0}
@@ -431,7 +431,7 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
                             </button>
                         </div>
                     </div>
-                    <div className="p-4 md:p-6 pt-0 transition-colors duration-500" style={{ backgroundColor: isHealthMode ? '#f3f4f6' : 'rgba(15, 23, 42, 0.5)' }}>
+                    <div className="p-4 md:p-6 pt-0 transition-colors duration-500" style={{ backgroundColor: isLightMode ? '#f3f4f6' : 'rgba(15, 23, 42, 0.5)' }}>
                         {pdfPreviewURL ? (
                             <iframe
                                 src={pdfPreviewURL}

@@ -6,32 +6,34 @@ import { downloadExcel, downloadCSV } from '../utils/exportUtils.ts';
 interface ResultsViewerProps {
     results: ExtractionResult[];
     theme?: any;
-    isHealthMode?: boolean;
+    isLightMode?: boolean;
     onClose?: () => void;
     onClearHistory?: () => void;
     onExportHistory?: () => void;
+    onExportExcel?: () => void;
     onImportHistory?: () => void;
 }
 
 export const ResultsViewer: React.FC<ResultsViewerProps> = ({
     results,
     theme,
-    isHealthMode,
+    isLightMode,
     onClose,
     onClearHistory,
     onExportHistory,
+    onExportExcel,
     onImportHistory
 }) => {
     const [selectedResult, setSelectedResult] = useState<ExtractionResult | null>(
         results.length > 0 ? results[0] : null
     );
 
-    const cardBg = isHealthMode ? '#ffffff' : 'rgba(30, 41, 59, 0.5)';
-    const borderColor = isHealthMode ? theme?.border || '#6ee7b7' : 'rgba(51, 65, 85, 0.5)';
-    const textColor = isHealthMode ? theme?.text || '#064e3b' : '#f1f5f9';
-    const textSecondary = isHealthMode ? theme?.textSecondary || '#065f46' : '#94a3b8';
-    const accentColor = isHealthMode ? theme?.primary || '#047857' : '#06b6d4';
-    const headerBg = isHealthMode ? '#f0fdf4' : 'rgba(2, 6, 23, 0.5)';
+    const cardBg = isLightMode ? '#ffffff' : 'rgba(30, 41, 59, 0.5)';
+    const borderColor = isLightMode ? '#dbeafe' : 'rgba(51, 65, 85, 0.5)';
+    const textColor = isLightMode ? '#1e3a8a' : '#f1f5f9';
+    const textSecondary = isLightMode ? '#475569' : '#94a3b8';
+    const accentColor = isLightMode ? '#2563eb' : '#06b6d4';
+    const headerBg = isLightMode ? '#eff6ff' : 'rgba(2, 6, 23, 0.5)';
 
     const handleDownloadJSON = () => {
         if (!selectedResult) return;
@@ -145,7 +147,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                             }}
                             className="w-full rounded-md p-2 text-sm transition-colors"
                             style={{
-                                backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
                                 borderWidth: '1px',
                                 borderStyle: 'solid',
                                 borderColor: borderColor,
@@ -166,7 +168,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                     <div
                         className="p-3 rounded-lg border transition-colors"
                         style={{
-                            backgroundColor: isHealthMode ? '#fef3c7' : 'rgba(55, 65, 81, 0.5)',
+                            backgroundColor: isLightMode ? '#eff6ff' : 'rgba(55, 65, 81, 0.5)',
                             borderColor: borderColor
                         }}
                     >
@@ -179,7 +181,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                                     onClick={onExportHistory}
                                     className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all hover:opacity-90"
                                     style={{
-                                        backgroundColor: isHealthMode ? '#10b981' : '#059669',
+                                        backgroundColor: isLightMode ? '#10b981' : '#059669',
                                         color: '#ffffff'
                                     }}
                                     title="Descargar historial completo como JSON"
@@ -187,7 +189,23 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                     </svg>
-                                    Exportar
+                                    Exportar JSON
+                                </button>
+                            )}
+                            {onExportExcel && (
+                                <button
+                                    onClick={onExportExcel}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all hover:opacity-90"
+                                    style={{
+                                        backgroundColor: isLightMode ? '#059669' : '#047857',
+                                        color: '#ffffff'
+                                    }}
+                                    title="Descargar historial completo como Excel"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    Exportar Excel
                                 </button>
                             )}
                             {onImportHistory && (
@@ -195,7 +213,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                                     onClick={onImportHistory}
                                     className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all hover:opacity-90"
                                     style={{
-                                        backgroundColor: isHealthMode ? '#3b82f6' : '#2563eb',
+                                        backgroundColor: isLightMode ? '#2563eb' : '#1d4ed8',
                                         color: '#ffffff'
                                     }}
                                     title="Importar historial desde archivo JSON"
@@ -211,7 +229,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                                     onClick={onClearHistory}
                                     className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all hover:opacity-90"
                                     style={{
-                                        backgroundColor: isHealthMode ? '#ef4444' : '#dc2626',
+                                        backgroundColor: isLightMode ? '#ef4444' : '#dc2626',
                                         color: '#ffffff'
                                     }}
                                     title="Eliminar todo el historial (no se puede deshacer)"
@@ -232,7 +250,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                         <div
                             className="p-3 rounded-lg border transition-colors"
                             style={{
-                                backgroundColor: isHealthMode ? '#f0fdf4' : 'rgba(15, 23, 42, 0.5)',
+                                backgroundColor: isLightMode ? '#f0fdf4' : 'rgba(15, 23, 42, 0.5)',
                                 borderColor: borderColor
                             }}
                         >
@@ -250,7 +268,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                                 onClick={handleDownloadJSON}
                                 className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all hover:opacity-90"
                                 style={{
-                                    backgroundColor: isHealthMode ? '#047857' : '#06b6d4',
+                                    backgroundColor: isLightMode ? '#047857' : '#06b6d4',
                                     color: '#ffffff'
                                 }}
                             >
@@ -263,7 +281,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                                 onClick={handleDownloadCSV}
                                 className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all hover:opacity-90"
                                 style={{
-                                    backgroundColor: isHealthMode ? '#059669' : '#0891b2',
+                                    backgroundColor: isLightMode ? '#059669' : '#0891b2',
                                     color: '#ffffff'
                                 }}
                             >
@@ -276,7 +294,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                                 onClick={handleDownloadExcel}
                                 className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all hover:opacity-90"
                                 style={{
-                                    backgroundColor: isHealthMode ? '#10b981' : '#0e7490',
+                                    backgroundColor: isLightMode ? '#10b981' : '#0e7490',
                                     color: '#ffffff'
                                 }}
                             >
@@ -289,8 +307,8 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                                 onClick={handleCopyToClipboard}
                                 className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all hover:opacity-90"
                                 style={{
-                                    backgroundColor: isHealthMode ? '#6ee7b7' : 'rgba(100, 116, 139, 0.5)',
-                                    color: isHealthMode ? '#064e3b' : '#f1f5f9',
+                                    backgroundColor: isLightMode ? '#6ee7b7' : 'rgba(100, 116, 139, 0.5)',
+                                    color: isLightMode ? '#064e3b' : '#f1f5f9',
                                     borderWidth: '1px',
                                     borderStyle: 'solid',
                                     borderColor: borderColor
@@ -311,7 +329,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
                             <div
                                 className="p-4 rounded-lg border transition-colors overflow-x-auto"
                                 style={{
-                                    backgroundColor: isHealthMode ? '#f9fafb' : 'rgba(15, 23, 42, 0.5)',
+                                    backgroundColor: isLightMode ? '#f9fafb' : 'rgba(15, 23, 42, 0.5)',
                                     borderColor: borderColor
                                 }}
                             >

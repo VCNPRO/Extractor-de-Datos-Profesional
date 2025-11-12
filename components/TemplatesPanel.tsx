@@ -26,7 +26,7 @@ interface TemplatesPanelProps {
     onSectorChange?: (sector: Sector) => void;
     currentSector?: Sector;
     theme?: any;
-    isHealthMode?: boolean;
+    isLightMode?: boolean;
 }
 
 const defaultTemplates: any[] = [
@@ -86,7 +86,7 @@ const defaultTemplates: any[] = [
       }
 ];
 
-export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema, currentPrompt, onSectorChange, currentSector, theme, isHealthMode }: TemplatesPanelProps) {
+export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema, currentPrompt, onSectorChange, currentSector, theme, isLightMode }: TemplatesPanelProps) {
     const [customTemplates, setCustomTemplates] = useState<any[]>([]);
     const [showSaveDialog, setShowSaveDialog] = useState(false);
     const [newTemplateName, setNewTemplateName] = useState('');
@@ -223,14 +223,14 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                     onClick={() => onSelectTemplate(template)}
                     className="w-full text-left p-3 border rounded-lg transition-all group hover:shadow-md"
                     style={{
-                        backgroundColor: isHealthMode ? '#ffffff' : 'rgba(30, 41, 59, 0.5)',
-                        borderColor: isHealthMode ? '#d1d5db' : '#475569'
+                        backgroundColor: isLightMode ? '#ffffff' : 'rgba(30, 41, 59, 0.5)',
+                        borderColor: isLightMode ? '#d1d5db' : '#475569'
                     }}
                 >
                     <div className="flex items-start gap-3">
                         <div
                             className="mt-0.5 transition-colors"
-                            style={{ color: isHealthMode ? accentColor : '#60a5fa' }}
+                            style={{ color: isLightMode ? accentColor : '#60a5fa' }}
                         >
                             {renderIcon(isHealthTemplate ? 'document' : template.icon)}
                         </div>
@@ -282,12 +282,12 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
         );
     };
 
-    const cardBg = isHealthMode ? '#ffffff' : 'rgba(30, 41, 59, 0.3)';
-    const borderColor = isHealthMode ? theme?.border || '#6ee7b7' : 'rgba(51, 65, 85, 0.5)';
-    const headerBg = isHealthMode ? '#ffffff' : 'rgba(2, 6, 23, 0.5)';
-    const textColor = isHealthMode ? theme?.text || '#064e3b' : '#f1f5f9';
-    const textSecondary = isHealthMode ? theme?.textSecondary || '#065f46' : '#94a3b8';
-    const accentColor = isHealthMode ? theme?.primary || '#047857' : '#06b6d4';
+    const cardBg = isLightMode ? '#ffffff' : 'rgba(30, 41, 59, 0.3)';
+    const borderColor = isLightMode ? '#dbeafe' : 'rgba(51, 65, 85, 0.5)';
+    const headerBg = isLightMode ? '#ffffff' : 'rgba(2, 6, 23, 0.5)';
+    const textColor = isLightMode ? '#1e3a8a' : '#f1f5f9';
+    const textSecondary = isLightMode ? '#475569' : '#94a3b8';
+    const accentColor = isLightMode ? '#2563eb' : '#06b6d4';
 
     return (
         <div
@@ -311,7 +311,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
             <div
                 className="flex-1 overflow-y-auto p-4 space-y-6"
                 style={{
-                    backgroundColor: isHealthMode ? '#f0fdf4' : 'transparent'
+                    backgroundColor: isLightMode ? '#f0f9ff' : 'transparent'
                 }}
             >
                 {/* Botones de Crear y Guardar Plantilla juntos */}
@@ -321,9 +321,9 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                             onClick={() => setIsCreatingTemplate(true)}
                             className="w-full p-2 border border-dashed rounded transition-all flex items-center justify-center gap-2 font-medium text-sm hover:opacity-90"
                             style={{
-                                backgroundColor: isHealthMode ? '#d1fae5' : 'rgba(6, 182, 212, 0.2)',
-                                borderColor: isHealthMode ? '#6ee7b7' : 'rgba(34, 211, 238, 0.5)',
-                                color: isHealthMode ? '#047857' : '#22d3ee'
+                                backgroundColor: isLightMode ? '#dbeafe' : 'rgba(6, 182, 212, 0.2)',
+                                borderColor: isLightMode ? '#93c5fd' : 'rgba(34, 211, 238, 0.5)',
+                                color: isLightMode ? '#1e3a8a' : '#22d3ee'
                             }}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -338,9 +338,9 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                 onClick={() => setShowSaveDialog(true)}
                                 className="w-full p-2 border rounded transition-all flex items-center justify-center gap-2 font-medium text-sm hover:opacity-90"
                                 style={{
-                                    backgroundColor: isHealthMode ? '#f3e8ff' : 'rgba(147, 51, 234, 0.2)',
-                                    borderColor: isHealthMode ? '#c084fc' : 'rgba(168, 85, 247, 0.5)',
-                                    color: isHealthMode ? '#7c3aed' : '#e9d5ff'
+                                    backgroundColor: isLightMode ? '#ede9fe' : 'rgba(147, 51, 234, 0.2)',
+                                    borderColor: isLightMode ? '#c084fc' : 'rgba(168, 85, 247, 0.5)',
+                                    color: isLightMode ? '#7c3aed' : '#e9d5ff'
                                 }}
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -353,8 +353,8 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                         {/* Dialog para guardar plantilla actual */}
                         {showSaveDialog && (
                             <div className="p-3 rounded-lg border space-y-2" style={{
-                                backgroundColor: isHealthMode ? '#f9fafb' : 'rgba(51, 65, 85, 0.5)',
-                                borderColor: isHealthMode ? '#d1d5db' : '#475569'
+                                backgroundColor: isLightMode ? '#f9fafb' : 'rgba(51, 65, 85, 0.5)',
+                                borderColor: isLightMode ? '#d1d5db' : '#475569'
                             }}>
                                 <input
                                     type="text"
@@ -363,10 +363,10 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                     onChange={(e) => setNewTemplateName(e.target.value)}
                                     className="w-full rounded px-2 py-1.5 text-sm"
                                     style={{
-                                        backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                        backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
                                         borderWidth: '1px',
                                         borderStyle: 'solid',
-                                        borderColor: isHealthMode ? '#d1d5db' : '#475569',
+                                        borderColor: isLightMode ? '#d1d5db' : '#475569',
                                         color: textColor
                                     }}
                                 />
@@ -377,10 +377,10 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                     onChange={(e) => setNewTemplateDescription(e.target.value)}
                                     className="w-full rounded px-2 py-1.5 text-sm"
                                     style={{
-                                        backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                        backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
                                         borderWidth: '1px',
                                         borderStyle: 'solid',
-                                        borderColor: isHealthMode ? '#d1d5db' : '#475569',
+                                        borderColor: isLightMode ? '#d1d5db' : '#475569',
                                         color: textColor
                                     }}
                                 />
@@ -390,7 +390,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                         disabled={!newTemplateName.trim()}
                                         className="flex-1 px-2 py-1.5 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:opacity-90"
                                         style={{
-                                            backgroundColor: isHealthMode ? '#7c3aed' : '#a855f7',
+                                            backgroundColor: isLightMode ? '#7c3aed' : '#a855f7',
                                             color: '#ffffff'
                                         }}
                                     >
@@ -404,8 +404,8 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                         }}
                                         className="flex-1 px-2 py-1.5 rounded text-sm font-medium transition-colors hover:opacity-80"
                                         style={{
-                                            backgroundColor: isHealthMode ? '#e5e7eb' : '#475569',
-                                            color: isHealthMode ? '#374151' : '#f1f5f9'
+                                            backgroundColor: isLightMode ? '#e5e7eb' : '#475569',
+                                            color: isLightMode ? '#374151' : '#f1f5f9'
                                         }}
                                     >
                                         Cancelar
@@ -429,8 +429,8 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                 }}
                                 className="text-xs px-2 py-1 rounded transition-colors hover:opacity-80"
                                 style={{
-                                    backgroundColor: isHealthMode ? '#fee2e2' : 'rgba(239, 68, 68, 0.2)',
-                                    color: isHealthMode ? '#dc2626' : '#f87171'
+                                    backgroundColor: isLightMode ? '#fee2e2' : 'rgba(239, 68, 68, 0.2)',
+                                    color: isLightMode ? '#dc2626' : '#f87171'
                                 }}
                             >
                                 Cancelar
@@ -450,7 +450,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                     onChange={(e) => setNewTemplateName(e.target.value)}
                                     className="w-full rounded px-2 py-1.5 text-sm transition-colors"
                                     style={{
-                                        backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                        backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
                                         borderWidth: '1px',
                                         borderStyle: 'solid',
                                         borderColor: borderColor,
@@ -469,7 +469,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                     onChange={(e) => setNewTemplateDescription(e.target.value)}
                                     className="w-full rounded px-2 py-1.5 text-sm transition-colors"
                                     style={{
-                                        backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                        backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
                                         borderWidth: '1px',
                                         borderStyle: 'solid',
                                         borderColor: borderColor,
@@ -487,7 +487,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                     rows={2}
                                     className="w-full rounded px-2 py-1.5 text-sm transition-colors"
                                     style={{
-                                        backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                        backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
                                         borderWidth: '1px',
                                         borderStyle: 'solid',
                                         borderColor: borderColor,
@@ -508,7 +508,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                     disabled={isGeneratingSchema || !newPrompt.trim()}
                                     className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
                                     style={{
-                                        backgroundColor: isHealthMode ? '#047857' : '#06b6d4',
+                                        backgroundColor: isLightMode ? '#2563eb' : '#06b6d4',
                                         color: '#ffffff'
                                     }}
                                 >
@@ -532,7 +532,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                 schema={newSchema}
                                 setSchema={setNewSchema}
                                 theme={theme}
-                                isHealthMode={isHealthMode}
+                                isLightMode={isLightMode}
                             />
                         </div>
 
@@ -542,7 +542,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                             disabled={!newTemplateName.trim() || newSchema.length === 0}
                             className="w-full py-1.5 rounded font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
                             style={{
-                                backgroundColor: isHealthMode ? '#047857' : '#06b6d4',
+                                backgroundColor: isLightMode ? '#2563eb' : '#06b6d4',
                                 color: '#ffffff'
                             }}
                         >
@@ -582,7 +582,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                             className="text-sm font-bold flex items-center gap-2 transition-colors duration-500"
                             style={{ color: textColor }}
                         >
-                            <FileIcon className="w-4 h-4" style={{ color: isHealthMode ? '#a855f7' : '#c084fc' }} />
+                            <FileIcon className="w-4 h-4" style={{ color: isLightMode ? '#a855f7' : '#c084fc' }} />
                             Mis Modelos
                         </h3>
                         <button
@@ -615,7 +615,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                     <div
                         className="p-4 border-t transition-colors duration-500"
                         style={{
-                            backgroundColor: isHealthMode ? '#f0fdf4' : 'rgba(15, 23, 42, 0.5)',
+                            backgroundColor: isLightMode ? '#f0f9ff' : 'rgba(15, 23, 42, 0.5)',
                             borderTopColor: borderColor
                         }}
                     >
@@ -632,7 +632,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                             onChange={(e) => handleSectorChange(e.target.value as Sector)}
                             className="w-full rounded-md p-2 text-sm transition-colors duration-500"
                             style={{
-                                backgroundColor: isHealthMode ? '#ffffff' : '#1e293b',
+                                backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
                                 borderColor: borderColor,
                                 color: textColor,
                                 border: `1px solid ${borderColor}`
@@ -673,14 +673,14 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                             <div
                                 className="mt-3 p-2 border rounded text-xs transition-colors duration-500"
                                 style={{
-                                    backgroundColor: isHealthMode ? '#dbeafe' : 'rgba(37, 99, 235, 0.1)',
-                                    borderColor: isHealthMode ? '#93c5fd' : 'rgba(59, 130, 246, 0.3)'
+                                    backgroundColor: isLightMode ? '#dbeafe' : 'rgba(37, 99, 235, 0.1)',
+                                    borderColor: isLightMode ? '#93c5fd' : 'rgba(59, 130, 246, 0.3)'
                                 }}
                             >
-                                <p className="font-medium transition-colors duration-500" style={{ color: isHealthMode ? '#1e40af' : '#93c5fd' }}>
+                                <p className="font-medium transition-colors duration-500" style={{ color: isLightMode ? '#1e40af' : '#93c5fd' }}>
                                     Modelo recomendado:
                                 </p>
-                                <p className="mt-0.5 transition-colors duration-500" style={{ color: isHealthMode ? '#1e3a8a' : '#bfdbfe' }}>
+                                <p className="mt-0.5 transition-colors duration-500" style={{ color: isLightMode ? '#1e3a8a' : '#bfdbfe' }}>
                                     {currentSectorInfo.recommendedModel === 'gemini-2.5-pro' ? 'Gemini 2.5 Pro' : 'Gemini 2.5 Flash'}
                                 </p>
                             </div>
