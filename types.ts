@@ -1,4 +1,3 @@
-
 export type UploadedFileStatus = 'pendiente' | 'procesando' | 'completado' | 'error';
 
 export interface UploadedFile {
@@ -170,10 +169,11 @@ export interface ExtractionResult {
     timestamp: string;
 }
 
-export type Sector = 'contabilidad' | 'finanzas' | 'marketing' | 'legal' | 'salud' | 'general';
+export type Departamento = 'contabilidad' | 'finanzas' | 'marketing' | 'legal' | 'rrhh' | 'general';
+export type TemplateType = 'factura' | 'informe' | 'contrato' | 'otro';
 
-export interface SectorInfo {
-    id: Sector;
+export interface DepartamentoInfo {
+    id: Departamento;
     name: string;
     description: string;
     icon: string;

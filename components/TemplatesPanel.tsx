@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { FileTextIcon, ReceiptIcon, FileIcon, SparklesIcon } from './Icons.tsx';
-import type { SchemaField, Sector } from '../types.ts';
-import { SECTORS, getSectorById } from '../utils/sectorsConfig.ts';
+import type { SchemaField, Departamento, TemplateType } from '../types.ts';
+import { DEPARTAMENTOS, getDepartamentoById } from '../utils/departamentosConfig.ts';
 import { SchemaBuilder } from './SchemaBuilder.tsx';
 import { generateSchemaFromPrompt } from '../services/geminiService.ts';
 
@@ -9,13 +10,13 @@ export interface Template {
     id: string;
     name: string;
     description: string;
-    type: 'factura' | 'nota' | 'modelo';
+    type: TemplateType;
     icon: 'receipt' | 'file' | 'document';
     schema: SchemaField[];
     prompt: string;
     archived?: boolean;
     custom?: boolean;
-    sector?: Sector;
+    departamento?: Departamento;
 }
 
 interface TemplatesPanelProps {
@@ -23,76 +24,65 @@ interface TemplatesPanelProps {
     onSaveTemplate?: (name: string, description: string) => void;
     currentSchema?: SchemaField[];
     currentPrompt?: string;
-    onSectorChange?: (sector: Sector) => void;
-    currentSector?: Sector;
+    onDepartamentoChange?: (departamento: Departamento) => void;
+    currentDepartamento?: Departamento;
     theme?: any;
     isLightMode?: boolean;
 }
 
-const defaultTemplates: any[] = [
-    // Salud
+const defaultTemplates: Template[] = [
     {
-        id: 'template_001_hc_completa',
-        nombre: 'Historia Clínica Completa',
-        descripcion: 'Formato completo de Historia Clínica según normas internacionales HL7',
-        categoria: 'historia_clinica_completa',
-        tipo: 'predefinida',
-        version: '1.0.0',
-        estandares_aplicados: ['HL7_v2', 'FHIR_R4'],
-        metadatos: {
-          departamento: 'Todos',
-          nivel_complejidad: 'avanzada',
-          requiere_firma_digital: true,
-          confidencialidad_nivel: 'altamente_confidencial',
-        },
-        secciones: [
-          {
-            id: 'seccion_001',
-            nombre: 'Datos de Filiación',
-            descripcion: 'Identificación del paciente y datos de contacto',
-            orden: 1,
-            obligatoria: true,
-            campos: [
-              {
-                nombre_campo: 'nombre_completo',
-                etiqueta: 'Nombre Completo',
-                tipo_dato: 'texto',
-                orden: 1,
-                obligatorio: true,
-                mapeo_estandares: {
-                  hl7_field: 'PID-5',
-                  fhir_path: 'Patient.name.text',
-                },
-                validaciones: {
-                  longitud_minima: 5,
-                  longitud_maxima: 100,
-                  patron_regex: '^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$',
-                },
-                configuracion_extraccion: {
-                  buscar_automaticamente: true,
-                  metodo_extraccion: ['ocr', 'nlp'],
-                },
-                security: {
-                  is_phi: true,
-                  phi_sensitivity: 'muy_alta',
-                  hipaa_identifier: true,
-                },
-              },
-            ],
-          },
+        id: 'template_001',
+        name: 'Factura Estándar',
+        description: 'Extrae los campos comunes de una factura.',
+        type: 'factura',
+        icon: 'receipt',
+        departamento: 'contabilidad',
+        schema: [
+            { id: 'f1', name: 'numero_factura', type: 'STRING' },
+            { id: 'f2', name: 'fecha_emision', type: 'STRING' },
+            { id: 'f3', name: 'total', type: 'NUMBER' },
+            { id: 'f4', name: 'impuestos', type: 'NUMBER' },
         ],
-        sector: 'salud',
-        icon: 'document'
-      }
+        prompt: 'Extrae el número de factura, la fecha de emisión, el total y los impuestos de la factura.',
+    },
+    {
+        id: 'template_002',
+        name: 'Informe de Gastos',
+        description: 'Extrae los gastos de un informe.',
+        type: 'informe',
+        icon: 'file',
+        departamento: 'finanzas',
+        schema: [
+            { id: 'i1', name: 'concepto', type: 'STRING' },
+            { id: 'i2', name: 'cantidad', type: 'NUMBER' },
+            { id: 'i3', name: 'fecha', type: 'STRING' },
+        ],
+        prompt: 'Extrae el concepto, la cantidad y la fecha de cada gasto en el informe.',
+    },
+    {
+        id: 'template_003',
+        name: 'Contrato de Servicio',
+        description: 'Extrae las cláusulas principales de un contrato.',
+        type: 'contrato',
+        icon: 'document',
+        departamento: 'legal',
+        schema: [
+            { id: 'c1', name: 'nombre_cliente', type: 'STRING' },
+            { id: 'c2', name: 'fecha_inicio', type: 'STRING' },
+            { id: 'c3', name: 'duracion_meses', type: 'NUMBER' },
+        ],
+        prompt: 'Extrae el nombre del cliente, la fecha de inicio y la duración en meses del contrato.',
+    },
 ];
 
-export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema, currentPrompt, onSectorChange, currentSector, theme, isLightMode }: TemplatesPanelProps) {
+export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema, currentPrompt, onDepartamentoChange, currentDepartamento, theme, isLightMode }: TemplatesPanelProps) {
     const [customTemplates, setCustomTemplates] = useState<any[]>([]);
     const [showSaveDialog, setShowSaveDialog] = useState(false);
     const [newTemplateName, setNewTemplateName] = useState('');
     const [newTemplateDescription, setNewTemplateDescription] = useState('');
     const [showArchived, setShowArchived] = useState(false);
-    const [selectedSector, setSelectedSector] = useState<Sector>(currentSector || 'general');
+    const [selectedDepartamento, setSelectedDepartamento] = useState<Departamento>(currentDepartamento || 'general');
     const [showCertificationsModal, setShowCertificationsModal] = useState(false);
     const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
     const [newSchema, setNewSchema] = useState<SchemaField[]>([{ id: `field-${Date.now()}`, name: '', type: 'STRING' }]);
@@ -100,8 +90,8 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
     const [isGeneratingSchema, setIsGeneratingSchema] = useState(false);
 
     useEffect(() => {
-        setSelectedSector(currentSector || 'general');
-    }, [currentSector]);
+        setSelectedDepartamento(currentDepartamento || 'general');
+    }, [currentDepartamento]);
 
     // Load custom templates from localStorage
     useEffect(() => {
@@ -188,20 +178,20 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
         }
     };
 
-    const handleSectorChange = (sector: Sector) => {
-        setSelectedSector(sector);
-        if (onSectorChange) {
-            onSectorChange(sector);
+    const handleDepartamentoChange = (departamento: Departamento) => {
+        setSelectedDepartamento(departamento);
+        if (onDepartamentoChange) {
+            onDepartamentoChange(departamento);
         }
     };
 
-    // Filtrar plantillas por sector seleccionado
-    const filteredTemplates = selectedSector === 'general'
+    // Filtrar plantillas por departamento seleccionado
+    const filteredTemplates = selectedDepartamento === 'general'
         ? defaultTemplates
-        : defaultTemplates.filter(t => t.sector === selectedSector);
+        : defaultTemplates.filter(t => t.departamento === selectedDepartamento);
 
     const activeCustomTemplates = customTemplates.filter(t => showArchived || !t.archived);
-    const currentSectorInfo = getSectorById(selectedSector);
+    const currentDepartamentoInfo = getDepartamentoById(selectedDepartamento);
 
     const renderIcon = (iconType: Template['icon']) => {
         switch (iconType) {
@@ -551,7 +541,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                     </div>
                 )}
 
-                {/* Plantillas del sector seleccionado - solo mostrar si NO estamos creando */}
+                {/* Plantillas del departamento seleccionado - solo mostrar si NO estamos creando */}
                 {!isCreatingTemplate && (
                     <>
                         {filteredTemplates.length > 0 ? (
@@ -560,8 +550,8 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                     className="text-sm font-bold mb-3 flex items-center gap-2 transition-colors duration-500"
                                     style={{ color: textColor }}
                                 >
-                                    <span className="text-lg">{currentSectorInfo?.icon}</span>
-                                    Plantillas de {currentSectorInfo?.name}
+                                    <span className="text-lg">{currentDepartamentoInfo?.icon}</span>
+                                    Plantillas de {currentDepartamentoInfo?.name}
                                 </h3>
                                 <div className="space-y-2">
                                     {filteredTemplates.map(template => (
@@ -571,7 +561,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                             </div>
                         ) : (
                             <div className="text-center py-8 text-sm transition-colors duration-500" style={{ color: textSecondary }}>
-                                <p>No hay plantillas para este sector</p>
+                                <p>No hay plantillas para este departamento</p>
                             </div>
                         )}
 
@@ -610,7 +600,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                     </>
                 )}
 
-                {/* Selector de Sectores, Certificaciones y Modelo - Al final */}
+                {/* Selector de Departamentos, Certificaciones y Modelo - Al final */}
                 {!isCreatingTemplate && (
                     <div
                         className="p-4 border-t transition-colors duration-500"
@@ -620,16 +610,16 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                         }}
                     >
                         <label
-                            htmlFor="sector-select"
+                            htmlFor="departamento-select"
                             className="block text-sm font-medium mb-2 transition-colors duration-500"
                             style={{ color: textColor }}
                         >
-                            Filtrar por Sector
+                            Filtrar por Departamento
                         </label>
                         <select
-                            id="sector-select"
-                            value={selectedSector}
-                            onChange={(e) => handleSectorChange(e.target.value as Sector)}
+                            id="departamento-select"
+                            value={selectedDepartamento}
+                            onChange={(e) => handleDepartamentoChange(e.target.value as Departamento)}
                             className="w-full rounded-md p-2 text-sm transition-colors duration-500"
                             style={{
                                 backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
@@ -638,38 +628,20 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                 border: `1px solid ${borderColor}`
                             }}
                         >
-                            {SECTORS.map(sector => (
-                                <option key={sector.id} value={sector.id}>
-                                    {sector.icon} {sector.name}
+                            {DEPARTAMENTOS.map(departamento => (
+                                <option key={departamento.id} value={departamento.id}>
+                                    {departamento.icon} {departamento.name}
                                 </option>
                             ))}
                         </select>
-                        {currentSectorInfo?.description && (
+                        {currentDepartamentoInfo?.description && (
                             <p className="text-xs mt-1 transition-colors duration-500" style={{ color: textSecondary }}>
-                                {currentSectorInfo.description}
+                                {currentDepartamentoInfo.description}
                             </p>
                         )}
 
-                        {/* Mostrar info de certificaciones para sector Salud */}
-                        {selectedSector === 'salud' && currentSectorInfo?.certifications && (
-                            <button
-                                onClick={() => setShowCertificationsModal(true)}
-                                className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 hover:opacity-90 border-2 rounded-md transition-all text-xs font-semibold"
-                                style={{
-                                    backgroundColor: '#d1fae5',
-                                    borderColor: '#6ee7b7',
-                                    color: '#047857'
-                                }}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
-                                Ver Certificaciones HIPAA
-                            </button>
-                        )}
-
                         {/* Modelo recomendado */}
-                        {currentSectorInfo?.recommendedModel && (
+                        {currentDepartamentoInfo?.recommendedModel && (
                             <div
                                 className="mt-3 p-2 border rounded text-xs transition-colors duration-500"
                                 style={{
@@ -681,7 +653,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                                     Modelo recomendado:
                                 </p>
                                 <p className="mt-0.5 transition-colors duration-500" style={{ color: isLightMode ? '#1e3a8a' : '#bfdbfe' }}>
-                                    {currentSectorInfo.recommendedModel === 'gemini-2.5-pro' ? 'Gemini 2.5 Pro' : 'Gemini 2.5 Flash'}
+                                    {currentDepartamentoInfo.recommendedModel === 'gemini-2.5-pro' ? 'Gemini 2.5 Pro' : 'Gemini 2.5 Flash'}
                                 </p>
                             </div>
                         )}
@@ -690,7 +662,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
             </div>
 
             {/* Modal de Certificaciones HIPAA */}
-            {showCertificationsModal && currentSectorInfo?.certifications && (
+            {showCertificationsModal && currentDepartamentoInfo?.certifications && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowCertificationsModal(false)}>
                     <div className="bg-slate-800 rounded-lg border border-green-500/50 shadow-xl max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-start justify-between mb-4">
@@ -718,7 +690,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
 
                         <h4 className="text-sm font-medium text-slate-200 mb-3">Certificaciones Actuales (2025):</h4>
                         <ul className="space-y-2 mb-4">
-                            {currentSectorInfo.certifications.map((cert, index) => (
+                            {currentDepartamentoInfo.certifications.map((cert, index) => (
                                 <li key={index} className="flex items-start gap-2 text-sm text-slate-300">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />

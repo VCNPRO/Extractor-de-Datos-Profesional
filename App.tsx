@@ -16,9 +16,9 @@ import { SettingsModal } from './components/SettingsModal.tsx';
 // Fix: Use explicit file extension in import.
 import { ResultsViewer } from './components/ResultsViewer.tsx';
 // Fix: Use explicit file extension in import.
-import type { UploadedFile, ExtractionResult, SchemaField, Sector } from './types.ts';
+import type { UploadedFile, ExtractionResult, SchemaField, Departamento } from './types.ts';
 import { AVAILABLE_MODELS, type GeminiModel } from './services/geminiService.ts';
-import { getSectorById, getDefaultTheme } from './utils/sectorsConfig.ts';
+import { getDepartamentoById, getDefaultTheme } from './utils/departamentosConfig.ts';
 
 function App() {
     const [files, setFiles] = useState<UploadedFile[]>([]);
@@ -28,7 +28,7 @@ function App() {
     const [viewingFile, setViewingFile] = useState<File | null>(null);
     const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
     const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
-    const [currentSector, setCurrentSector] = useState<Sector>('Europa');
+    const [currentDepartamento, setCurrentDepartamento] = useState<Departamento>('general');
     const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
     const [showResultsExpanded, setShowResultsExpanded] = useState<boolean>(false);
     const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-flash');
@@ -38,11 +38,11 @@ function App() {
     const [prompt, setPrompt] = useState<string>('Extrae la información clave del siguiente documento según el esquema JSON proporcionado.');
     const [schema, setSchema] = useState<SchemaField[]>([{ id: `field-${Date.now()}`, name: '', type: 'STRING' }]);
 
-    // Obtener el tema basado en el sector actual
+    // Obtener el tema basado en el departamento actual
     const currentTheme = useMemo(() => {
-        const sectorInfo = getSectorById(currentSector);
-        return sectorInfo?.theme || getDefaultTheme();
-    }, [currentSector]);
+        const departamentoInfo = getDepartamentoById(currentDepartamento);
+        return departamentoInfo?.theme || getDefaultTheme();
+    }, [currentDepartamento]);
 
     // Determinar si estamos en modo claro
     const isLightMode = !isDarkMode;
@@ -231,13 +231,13 @@ function App() {
             setPrompt(template.prompt);
         }
 
-        if (template.sector) {
-            setCurrentSector(template.sector);
+        if (template.departamento) {
+            setCurrentDepartamento(template.departamento);
         }
     };
 
-    const handleSectorChange = (sector: Sector) => {
-        setCurrentSector(sector);
+    const handleDepartamentoChange = (departamento: Departamento) => {
+        setCurrentDepartamento(departamento);
     };
 
     const handleViewFile = (file: File) => {
@@ -538,8 +538,8 @@ function App() {
                                     onSelectTemplate={handleSelectTemplate}
                                     currentSchema={schema}
                                     currentPrompt={prompt}
-                                    onSectorChange={handleSectorChange}
-                                    currentSector={currentSector}
+                                    onDepartamentoChange={handleDepartamentoChange}
+                                    currentDepartamento={currentDepartamento}
                                     theme={currentTheme}
                                     isLightMode={isLightMode}
                                 />
