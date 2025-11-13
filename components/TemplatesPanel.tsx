@@ -74,6 +74,21 @@ const defaultTemplates: Template[] = [
         ],
         prompt: 'Extrae el nombre del cliente, la fecha de inicio y la duración en meses del contrato.',
     },
+    {
+        id: 'template_004',
+        name: 'Presupuesto de Marketing',
+        description: 'Extrae datos de presupuestos de campañas.',
+        type: 'informe',
+        icon: 'file',
+        departamento: 'marketing',
+        schema: [
+            { id: 'm1', name: 'nombre_campana', type: 'STRING' },
+            { id: 'm2', name: 'presupuesto_total', type: 'NUMBER' },
+            { id: 'm3', name: 'fecha_inicio', type: 'STRING' },
+            { id: 'm4', name: 'fecha_fin', type: 'STRING' },
+        ],
+        prompt: 'Extrae el nombre de la campaña, presupuesto total y fechas de inicio y fin.',
+    },
 ];
 
 export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema, currentPrompt, onDepartamentoChange, currentDepartamento, theme, isLightMode }: TemplatesPanelProps) {
@@ -82,8 +97,12 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
     const [newTemplateName, setNewTemplateName] = useState('');
     const [newTemplateDescription, setNewTemplateDescription] = useState('');
     const [showArchived, setShowArchived] = useState(false);
+    const [showArchivedCustom, setShowArchivedCustom] = useState(false);
     const [selectedDepartamento, setSelectedDepartamento] = useState<Departamento>(currentDepartamento || 'general');
-    const [showCertificationsModal, setShowCertificationsModal] = useState(false);
+
+    // Estados para controlar secciones colapsables
+    const [showMyModelsSection, setShowMyModelsSection] = useState(false);
+    const [showTemplatesSection, setShowTemplatesSection] = useState(true);
     const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
     const [newSchema, setNewSchema] = useState<SchemaField[]>([{ id: `field-${Date.now()}`, name: '', type: 'STRING' }]);
     const [newPrompt, setNewPrompt] = useState('Extrae la información clave del siguiente documento según el esquema JSON proporcionado.');
@@ -95,7 +114,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
 
     // Load custom templates from localStorage
     useEffect(() => {
-        const stored = localStorage.getItem('customTemplates');
+        const stored = localStorage.getItem('customTemplates_europa');
         if (stored) {
             try {
                 setCustomTemplates(JSON.parse(stored));
@@ -107,7 +126,7 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
 
     // Save custom templates to localStorage
     const saveToLocalStorage = (templates: Template[]) => {
-        localStorage.setItem('customTemplates', JSON.stringify(templates));
+        localStorage.setItem('customTemplates_europa', JSON.stringify(templates));
     };
 
     const handleSaveTemplate = () => {
@@ -187,10 +206,15 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
 
     // Filtrar plantillas por departamento seleccionado
     const filteredTemplates = selectedDepartamento === 'general'
-        ? defaultTemplates
-        : defaultTemplates.filter(t => t.departamento === selectedDepartamento);
+        ? defaultTemplates.filter(t => !t.archived)
+        : defaultTemplates.filter(t => t.departamento === selectedDepartamento && !t.archived);
 
-    const activeCustomTemplates = customTemplates.filter(t => showArchived || !t.archived);
+    const filteredArchivedTemplates = selectedDepartamento === 'general'
+        ? defaultTemplates.filter(t => t.archived)
+        : defaultTemplates.filter(t => t.departamento === selectedDepartamento && t.archived);
+
+    const activeCustomTemplates = customTemplates.filter(t => !t.archived);
+    const archivedCustomTemplates = customTemplates.filter(t => t.archived);
     const currentDepartamentoInfo = getDepartamentoById(selectedDepartamento);
 
     const renderIcon = (iconType: Template['icon']) => {
@@ -205,8 +229,6 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
     };
 
     const TemplateCard = ({ template, showActions = false }: { template: any, showActions?: boolean }) => {
-        const isHealthTemplate = 'secciones' in template;
-
         return (
             <div className="relative group/card">
                 <button
@@ -222,20 +244,20 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                             className="mt-0.5 transition-colors"
                             style={{ color: isLightMode ? accentColor : '#60a5fa' }}
                         >
-                            {renderIcon(isHealthTemplate ? 'document' : template.icon)}
+                            {renderIcon(template.icon)}
                         </div>
                         <div className="flex-1 min-w-0">
                             <h4
                                 className="text-sm font-semibold transition-colors"
                                 style={{ color: textColor }}
                             >
-                                {isHealthTemplate ? template.nombre : template.name} {template.archived && <span className="text-xs opacity-50">(Archivada)</span>}
+                                {template.name} {template.archived && <span className="text-xs opacity-50">(Archivada)</span>}
                             </h4>
                             <p
                                 className="text-xs mt-0.5 line-clamp-2 transition-colors"
                                 style={{ color: textSecondary }}
                             >
-                                {template.description || (isHealthTemplate && template.descripcion)}
+                                {template.description}
                             </p>
                         </div>
                     </div>
@@ -295,115 +317,214 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                 }}
             >
                 <h2 className="text-lg font-semibold transition-colors duration-500" style={{ color: textColor }}>Plantillas</h2>
-                <p className="text-xs mt-1 transition-colors duration-500" style={{ color: textSecondary }}>Modelos y plantillas predefinidas</p>
+                <p className="text-xs mt-1 transition-colors duration-500" style={{ color: textSecondary }}>Gestión de plantillas de extracción</p>
             </div>
 
             <div
-                className="flex-1 overflow-y-auto p-4 space-y-6"
+                className="flex-1 overflow-y-auto p-4 space-y-4"
                 style={{
                     backgroundColor: isLightMode ? '#f0f9ff' : 'transparent'
                 }}
             >
-                {/* Botones de Crear y Guardar Plantilla juntos */}
                 {!isCreatingTemplate ? (
-                    <div className="space-y-2">
-                        <button
-                            onClick={() => setIsCreatingTemplate(true)}
-                            className="w-full p-2 border border-dashed rounded transition-all flex items-center justify-center gap-2 font-medium text-sm hover:opacity-90"
-                            style={{
-                                backgroundColor: isLightMode ? '#dbeafe' : 'rgba(6, 182, 212, 0.2)',
-                                borderColor: isLightMode ? '#93c5fd' : 'rgba(34, 211, 238, 0.5)',
-                                color: isLightMode ? '#1e3a8a' : '#22d3ee'
-                            }}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            <span>Crear Plantilla</span>
-                        </button>
-
-                        {/* Botón para guardar plantilla actual del editor */}
-                        {currentSchema && currentPrompt && (
+                    <>
+                        {/* SECCIÓN 1: MIS MODELOS */}
+                        <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: borderColor }}>
                             <button
-                                onClick={() => setShowSaveDialog(true)}
-                                className="w-full p-2 border rounded transition-all flex items-center justify-center gap-2 font-medium text-sm hover:opacity-90"
+                                onClick={() => setShowMyModelsSection(!showMyModelsSection)}
+                                className="w-full flex items-center justify-between p-3 transition-colors hover:opacity-80"
                                 style={{
-                                    backgroundColor: isLightMode ? '#ede9fe' : 'rgba(147, 51, 234, 0.2)',
-                                    borderColor: isLightMode ? '#c084fc' : 'rgba(168, 85, 247, 0.5)',
-                                    color: isLightMode ? '#7c3aed' : '#e9d5ff'
+                                    backgroundColor: isLightMode ? '#eff6ff' : 'rgba(2, 6, 23, 0.5)',
+                                    color: textColor
                                 }}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                                </svg>
-                                <span>Guardar Plantilla</span>
-                            </button>
-                        )}
-
-                        {/* Dialog para guardar plantilla actual */}
-                        {showSaveDialog && (
-                            <div className="p-3 rounded-lg border space-y-2" style={{
-                                backgroundColor: isLightMode ? '#f9fafb' : 'rgba(51, 65, 85, 0.5)',
-                                borderColor: isLightMode ? '#d1d5db' : '#475569'
-                            }}>
-                                <input
-                                    type="text"
-                                    placeholder="Nombre de la plantilla"
-                                    value={newTemplateName}
-                                    onChange={(e) => setNewTemplateName(e.target.value)}
-                                    className="w-full rounded px-2 py-1.5 text-sm"
-                                    style={{
-                                        backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
-                                        borderWidth: '1px',
-                                        borderStyle: 'solid',
-                                        borderColor: isLightMode ? '#d1d5db' : '#475569',
-                                        color: textColor
-                                    }}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Descripción (opcional)"
-                                    value={newTemplateDescription}
-                                    onChange={(e) => setNewTemplateDescription(e.target.value)}
-                                    className="w-full rounded px-2 py-1.5 text-sm"
-                                    style={{
-                                        backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
-                                        borderWidth: '1px',
-                                        borderStyle: 'solid',
-                                        borderColor: isLightMode ? '#d1d5db' : '#475569',
-                                        color: textColor
-                                    }}
-                                />
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={handleSaveTemplate}
-                                        disabled={!newTemplateName.trim()}
-                                        className="flex-1 px-2 py-1.5 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:opacity-90"
-                                        style={{
-                                            backgroundColor: isLightMode ? '#7c3aed' : '#a855f7',
-                                            color: '#ffffff'
-                                        }}
-                                    >
-                                        Guardar
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setShowSaveDialog(false);
-                                            setNewTemplateName('');
-                                            setNewTemplateDescription('');
-                                        }}
-                                        className="flex-1 px-2 py-1.5 rounded text-sm font-medium transition-colors hover:opacity-80"
-                                        style={{
-                                            backgroundColor: isLightMode ? '#e5e7eb' : '#475569',
-                                            color: isLightMode ? '#374151' : '#f1f5f9'
-                                        }}
-                                    >
-                                        Cancelar
-                                    </button>
+                                <div className="flex items-center gap-2">
+                                    <FileIcon className="w-4 h-4" style={{ color: isLightMode ? '#a855f7' : '#c084fc' }} />
+                                    <span className="text-sm font-semibold">Mis Modelos</span>
+                                    <span className="text-xs px-1.5 py-0.5 rounded" style={{
+                                        backgroundColor: isLightMode ? '#dbeafe' : 'rgba(6, 182, 212, 0.2)',
+                                        color: isLightMode ? '#1e3a8a' : '#22d3ee'
+                                    }}>
+                                        {activeCustomTemplates.length}
+                                    </span>
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className={`h-5 w-5 transition-transform ${showMyModelsSection ? 'rotate-180' : ''}`}
+                                    style={{ color: textSecondary }}
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            {showMyModelsSection && (
+                                <div className="p-3 space-y-3">
+                                    {/* Botón crear plantilla */}
+                                    <button
+                                        onClick={() => setIsCreatingTemplate(true)}
+                                        className="w-full p-2 border border-dashed rounded transition-all flex items-center justify-center gap-2 font-medium text-sm hover:opacity-90"
+                                        style={{
+                                            backgroundColor: isLightMode ? '#dbeafe' : 'rgba(6, 182, 212, 0.2)',
+                                            borderColor: isLightMode ? '#93c5fd' : 'rgba(34, 211, 238, 0.5)',
+                                            color: isLightMode ? '#1e3a8a' : '#22d3ee'
+                                        }}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        <span>Crear Nueva Plantilla</span>
+                                    </button>
+
+                                    {/* Plantillas personalizadas */}
+                                    {activeCustomTemplates.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {activeCustomTemplates.map(template => (
+                                                <TemplateCard key={template.id} template={template} showActions={true} />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-4 text-xs" style={{ color: textSecondary }}>
+                                            <p>No tienes plantillas personalizadas</p>
+                                            <p className="mt-1">Crea una para empezar</p>
+                                        </div>
+                                    )}
+
+                                    {/* Plantillas archivadas */}
+                                    {archivedCustomTemplates.length > 0 && (
+                                        <div className="mt-3 pt-3 border-t" style={{ borderTopColor: borderColor }}>
+                                            <button
+                                                onClick={() => setShowArchivedCustom(!showArchivedCustom)}
+                                                className="w-full flex items-center justify-between p-2 rounded transition-colors hover:opacity-80"
+                                                style={{ color: textSecondary }}
+                                            >
+                                                <span className="text-xs font-medium">Plantillas Archivadas ({archivedCustomTemplates.length})</span>
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    className={`h-4 w-4 transition-transform ${showArchivedCustom ? 'rotate-180' : ''}`}
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                            {showArchivedCustom && (
+                                                <div className="mt-2 space-y-2">
+                                                    {archivedCustomTemplates.map(template => (
+                                                        <TemplateCard key={template.id} template={template} showActions={true} />
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* SECCIÓN 2: PLANTILLAS PREDEFINIDAS */}
+                        <div className="border-2 rounded-lg overflow-hidden" style={{ borderColor: borderColor }}>
+                            <button
+                                onClick={() => setShowTemplatesSection(!showTemplatesSection)}
+                                className="w-full flex items-center justify-between p-3 transition-colors hover:opacity-80"
+                                style={{
+                                    backgroundColor: isLightMode ? '#eff6ff' : 'rgba(2, 6, 23, 0.5)',
+                                    color: textColor
+                                }}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <FileTextIcon className="w-4 h-4" style={{ color: accentColor }} />
+                                    <span className="text-sm font-semibold">Plantillas Predefinidas</span>
+                                    <span className="text-xs px-1.5 py-0.5 rounded" style={{
+                                        backgroundColor: isLightMode ? '#dbeafe' : 'rgba(6, 182, 212, 0.2)',
+                                        color: isLightMode ? '#1e3a8a' : '#22d3ee'
+                                    }}>
+                                        {filteredTemplates.length}
+                                    </span>
+                                </div>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className={`h-5 w-5 transition-transform ${showTemplatesSection ? 'rotate-180' : ''}`}
+                                    style={{ color: textSecondary }}
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            {showTemplatesSection && (
+                                <div className="p-3 space-y-3">
+                                    {/* Selector de departamento */}
+                                    <div>
+                                        <label className="block text-xs font-medium mb-1.5" style={{ color: textColor }}>
+                                            Departamento:
+                                        </label>
+                                        <select
+                                            value={selectedDepartamento}
+                                            onChange={(e) => handleDepartamentoChange(e.target.value as Departamento)}
+                                            className="w-full rounded-md p-2 text-sm transition-colors"
+                                            style={{
+                                                backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
+                                                borderColor: borderColor,
+                                                color: textColor,
+                                                border: `1px solid ${borderColor}`
+                                            }}
+                                        >
+                                            {DEPARTAMENTOS.map(dept => (
+                                                <option key={dept.id} value={dept.id}>
+                                                    {dept.icon} {dept.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Plantillas filtradas */}
+                                    {filteredTemplates.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {filteredTemplates.map(template => (
+                                                <TemplateCard key={template.id} template={template} />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-4 text-xs" style={{ color: textSecondary }}>
+                                            <p>No hay plantillas para este departamento</p>
+                                        </div>
+                                    )}
+
+                                    {/* Plantillas archivadas */}
+                                    {filteredArchivedTemplates.length > 0 && (
+                                        <div className="mt-3 pt-3 border-t" style={{ borderTopColor: borderColor }}>
+                                            <button
+                                                onClick={() => setShowArchived(!showArchived)}
+                                                className="w-full flex items-center justify-between p-2 rounded transition-colors hover:opacity-80"
+                                                style={{ color: textSecondary }}
+                                            >
+                                                <span className="text-xs font-medium">Plantillas Archivadas ({filteredArchivedTemplates.length})</span>
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    className={`h-4 w-4 transition-transform ${showArchived ? 'rotate-180' : ''}`}
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                            {showArchived && (
+                                                <div className="mt-2 space-y-2">
+                                                    {filteredArchivedTemplates.map(template => (
+                                                        <TemplateCard key={template.id} template={template} />
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </>
                 ) : (
                     <div className="space-y-3">
                         {/* Header con título y botón cancelar */}
@@ -530,190 +651,17 @@ export function TemplatesPanel({ onSelectTemplate, onSaveTemplate, currentSchema
                         <button
                             onClick={handleSaveTemplate}
                             disabled={!newTemplateName.trim() || newSchema.length === 0}
-                            className="w-full py-1.5 rounded font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                            className="w-full p-2 rounded font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
                             style={{
                                 backgroundColor: isLightMode ? '#2563eb' : '#06b6d4',
                                 color: '#ffffff'
                             }}
                         >
-                            Guardar
+                            Guardar Plantilla
                         </button>
-                    </div>
-                )}
-
-                {/* Plantillas del departamento seleccionado - solo mostrar si NO estamos creando */}
-                {!isCreatingTemplate && (
-                    <>
-                        {filteredTemplates.length > 0 ? (
-                            <div>
-                                <h3
-                                    className="text-sm font-bold mb-3 flex items-center gap-2 transition-colors duration-500"
-                                    style={{ color: textColor }}
-                                >
-                                    <span className="text-lg">{currentDepartamentoInfo?.icon}</span>
-                                    Plantillas de {currentDepartamentoInfo?.name}
-                                </h3>
-                                <div className="space-y-2">
-                                    {filteredTemplates.map(template => (
-                                        <TemplateCard key={template.id} template={template} />
-                                    ))}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-8 text-sm transition-colors duration-500" style={{ color: textSecondary }}>
-                                <p>No hay plantillas para este departamento</p>
-                            </div>
-                        )}
-
-                        {/* Modelos Guardados */}
-                        <div>
-                    <div className="flex items-center justify-between mb-3">
-                        <h3
-                            className="text-sm font-bold flex items-center gap-2 transition-colors duration-500"
-                            style={{ color: textColor }}
-                        >
-                            <FileIcon className="w-4 h-4" style={{ color: isLightMode ? '#a855f7' : '#c084fc' }} />
-                            Mis Modelos
-                        </h3>
-                        <button
-                            onClick={() => setShowArchived(!showArchived)}
-                            className="text-xs hover:opacity-80 transition-all font-medium"
-                            style={{ color: textSecondary }}
-                        >
-                            {showArchived ? 'Ocultar archivadas' : 'Ver archivadas'}
-                        </button>
-                    </div>
-
-                    {activeCustomTemplates.length > 0 ? (
-                        <div className="space-y-2">
-                            {activeCustomTemplates.map(template => (
-                                <TemplateCard key={template.id} template={template} showActions={true} />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-8 text-sm transition-colors duration-500" style={{ color: textSecondary }}>
-                            <p>No hay modelos guardados</p>
-                            <p className="text-xs mt-1 opacity-75">Crea y guarda tus propios modelos</p>
-                        </div>
-                    )}
-                </div>
-                    </>
-                )}
-
-                {/* Selector de Departamentos, Certificaciones y Modelo - Al final */}
-                {!isCreatingTemplate && (
-                    <div
-                        className="p-4 border-t transition-colors duration-500"
-                        style={{
-                            backgroundColor: isLightMode ? '#f0f9ff' : 'rgba(15, 23, 42, 0.5)',
-                            borderTopColor: borderColor
-                        }}
-                    >
-                        <label
-                            htmlFor="departamento-select"
-                            className="block text-sm font-medium mb-2 transition-colors duration-500"
-                            style={{ color: textColor }}
-                        >
-                            Filtrar por Departamento
-                        </label>
-                        <select
-                            id="departamento-select"
-                            value={selectedDepartamento}
-                            onChange={(e) => handleDepartamentoChange(e.target.value as Departamento)}
-                            className="w-full rounded-md p-2 text-sm transition-colors duration-500"
-                            style={{
-                                backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
-                                borderColor: borderColor,
-                                color: textColor,
-                                border: `1px solid ${borderColor}`
-                            }}
-                        >
-                            {DEPARTAMENTOS.map(departamento => (
-                                <option key={departamento.id} value={departamento.id}>
-                                    {departamento.icon} {departamento.name}
-                                </option>
-                            ))}
-                        </select>
-                        {currentDepartamentoInfo?.description && (
-                            <p className="text-xs mt-1 transition-colors duration-500" style={{ color: textSecondary }}>
-                                {currentDepartamentoInfo.description}
-                            </p>
-                        )}
-
-                        {/* Modelo recomendado */}
-                        {currentDepartamentoInfo?.recommendedModel && (
-                            <div
-                                className="mt-3 p-2 border rounded text-xs transition-colors duration-500"
-                                style={{
-                                    backgroundColor: isLightMode ? '#dbeafe' : 'rgba(37, 99, 235, 0.1)',
-                                    borderColor: isLightMode ? '#93c5fd' : 'rgba(59, 130, 246, 0.3)'
-                                }}
-                            >
-                                <p className="font-medium transition-colors duration-500" style={{ color: isLightMode ? '#1e40af' : '#93c5fd' }}>
-                                    Modelo recomendado:
-                                </p>
-                                <p className="mt-0.5 transition-colors duration-500" style={{ color: isLightMode ? '#1e3a8a' : '#bfdbfe' }}>
-                                    {currentDepartamentoInfo.recommendedModel === 'gemini-2.5-pro' ? 'Gemini 2.5 Pro' : 'Gemini 2.5 Flash'}
-                                </p>
-                            </div>
-                        )}
                     </div>
                 )}
             </div>
-
-            {/* Modal de Certificaciones HIPAA */}
-            {showCertificationsModal && currentDepartamentoInfo?.certifications && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowCertificationsModal(false)}>
-                    <div className="bg-slate-800 rounded-lg border border-green-500/50 shadow-xl max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
-                                <h3 className="text-xl font-semibold text-green-300">Certificaciones del Sector Salud</h3>
-                            </div>
-                            <button
-                                onClick={() => setShowCertificationsModal(false)}
-                                className="text-slate-400 hover:text-slate-200 transition-colors"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div className="mb-4 p-3 bg-green-900/20 border border-green-700/50 rounded-lg">
-                            <p className="text-sm text-green-200">
-                                Google Gemini cuenta con las certificaciones necesarias para trabajar con datos médicos y cumplir con regulaciones de salud.
-                            </p>
-                        </div>
-
-                        <h4 className="text-sm font-medium text-slate-200 mb-3">Certificaciones Actuales (2025):</h4>
-                        <ul className="space-y-2 mb-4">
-                            {currentDepartamentoInfo.certifications.map((cert, index) => (
-                                <li key={index} className="flex items-start gap-2 text-sm text-slate-300">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>{cert}</span>
-                                </li>
-                            ))}
-                        </ul>
-
-                        <div className="p-3 bg-blue-900/20 border border-blue-700/50 rounded-lg text-xs text-blue-200">
-                            <p className="font-medium mb-1">Nota Importante:</p>
-                            <p>Para usar Gemini con datos médicos protegidos (PHI), se requiere firmar un Business Associate Agreement (BAA) con Google y activar las configuraciones de proyectos regulados.</p>
-                        </div>
-
-                        <button
-                            onClick={() => setShowCertificationsModal(false)}
-                            className="mt-4 w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
-                        >
-                            Cerrar
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
