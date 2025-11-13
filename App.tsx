@@ -19,8 +19,12 @@ import { ResultsViewer } from './components/ResultsViewer.tsx';
 import type { UploadedFile, ExtractionResult, SchemaField, Departamento } from './types.ts';
 import { AVAILABLE_MODELS, type GeminiModel } from './services/geminiService.ts';
 import { getDepartamentoById, getDefaultTheme } from './utils/departamentosConfig.ts';
+// MODO MOCK TEMPORAL - Cambiar a './src/contexts/AuthContext.tsx' cuando Firebase esté configurado
+import { AuthProvider, useAuth } from './src/contexts/AuthContext.mock.tsx';
+import { AuthModal } from './src/components/AuthModal.tsx';
 
-function App() {
+function AppContent() {
+    const { currentUser, userProfile, logout } = useAuth();
     const [files, setFiles] = useState<UploadedFile[]>([]);
     const [activeFileId, setActiveFileId] = useState<string | null>(null);
     const [history, setHistory] = useState<ExtractionResult[]>([]);
@@ -383,9 +387,14 @@ function App() {
         input.click();
     };
 
+    // Mostrar modal de autenticación si no hay usuario
+    if (!currentUser) {
+        return <AuthModal isLightMode={isLightMode} />;
+    }
+
     return (
         <div
-            className="min-h-screen font-sans transition-colors duration-500"
+            className="min-h-screen font-sans transition-colors duration-500 flex flex-col"
             style={{
                 backgroundColor: isDarkMode ? '#0f172a' : '#f0f9ff', // Light blue for light mode
                 color: isDarkMode ? '#e2e8f0' : '#0f172a'
@@ -480,13 +489,29 @@ function App() {
                             </svg>
                             <span className="hidden sm:inline">Ayuda</span>
                         </button>
+
+                            {/* Logout Button */}
+                            <button
+                                onClick={logout}
+                                className="flex items-center gap-2 px-3 py-2 border-2 rounded-lg transition-all duration-500 hover:shadow-lg hover:scale-105"
+                                style={{
+                                    backgroundColor: isLightMode ? '#ffffff' : '#1e293b',
+                                    borderColor: isLightMode ? '#ef4444' : '#475569',
+                                    color: isLightMode ? '#dc2626' : '#f87171'
+                                }}
+                                title="Cerrar Sesión"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </div>
             </header>
 
-            <main className="p-4 sm:p-6 lg:p-8">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" style={{height: 'calc(100vh - 112px)'}}>
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[calc(100vh-16rem)]">
                     <div className="lg:col-span-3 h-full">
                          <FileUploader
                             files={files}
@@ -712,6 +737,14 @@ function App() {
                 </div>
             </footer>
         </div>
+    );
+}
+
+function App() {
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
     );
 }
 

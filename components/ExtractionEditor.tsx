@@ -149,7 +149,7 @@ export const ExtractionEditor: React.FC<ExtractionEditorProps> = ({ file, templa
                 <CubeIcon className="w-16 h-16 mb-4" style={{ color: textSecondary }} />
                 <h3 className="text-xl font-semibold" style={{ color: textColor }}>Seleccione un archivo</h3>
                 <p className="max-w-sm mx-auto mt-1" style={{ color: textSecondary }}>
-                    Elija un documento del lote de la izquierda para comenzar a definir su esquema de extracción y ver los resultados.
+                    Elija una plantilla del panel derecho y suba un documento del panel izquierdo para comenzar la extracción.
                 </p>
             </div>
         );
