@@ -1,3 +1,12 @@
 {
-  "regions": ["fra1", "cdg1"]
+  "regions": ["fra1", "cdg1"],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite"
 }
