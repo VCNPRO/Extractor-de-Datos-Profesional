@@ -15,6 +15,7 @@ import { HelpModal } from './components/HelpModal.tsx';
 import { SettingsModal } from './components/SettingsModal.tsx';
 // Fix: Use explicit file extension in import.
 import { ResultsViewer } from './components/ResultsViewer.tsx';
+import { ChatbotLaia } from './components/ChatbotLaia.tsx';
 // Fix: Use explicit file extension in import.
 import type { UploadedFile, ExtractionResult, SchemaField, Departamento } from './types.ts';
 import { AVAILABLE_MODELS, type GeminiModel } from './services/geminiService.ts';
@@ -736,6 +737,9 @@ function AppContent() {
                     </div>
                 </div>
             </footer>
+
+            {/* Chatbot Laia */}
+            <ChatbotLaia isLightMode={isLightMode} />
         </div>
     );
 }
