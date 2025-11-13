@@ -16,8 +16,10 @@ import { SettingsModal } from './components/SettingsModal.tsx';
 // Fix: Use explicit file extension in import.
 import { ResultsViewer } from './components/ResultsViewer.tsx';
 import { ChatbotLaia } from './components/ChatbotLaia.tsx';
+import { AdminDashboard } from './components/AdminDashboard.tsx';
 // Fix: Use explicit file extension in import.
 import type { UploadedFile, ExtractionResult, SchemaField, Departamento } from './types.ts';
+import { logActivity } from './src/utils/activityLogger.ts';
 import { AVAILABLE_MODELS, type GeminiModel } from './services/geminiService.ts';
 import { getDepartamentoById, getDefaultTheme } from './utils/departamentosConfig.ts';
 // MODO MOCK TEMPORAL - Cambiar a './src/contexts/AuthContext.tsx' cuando Firebase esté configurado
@@ -26,6 +28,10 @@ import { AuthModal } from './src/components/AuthModal.tsx';
 
 function AppContent() {
     const { currentUser, userProfile, logout } = useAuth();
+
+    // Detectar si estamos en la ruta /admin
+    const isAdminRoute = window.location.pathname === '/admin';
+
     const [files, setFiles] = useState<UploadedFile[]>([]);
     const [activeFileId, setActiveFileId] = useState<string | null>(null);
     const [history, setHistory] = useState<ExtractionResult[]>([]);
@@ -391,6 +397,11 @@ function AppContent() {
     // Mostrar modal de autenticación si no hay usuario
     if (!currentUser) {
         return <AuthModal isLightMode={isLightMode} />;
+    }
+
+    // Si estamos en la ruta /admin, mostrar el dashboard de administración
+    if (isAdminRoute) {
+        return <AdminDashboard isLightMode={isLightMode} />;
     }
 
     return (

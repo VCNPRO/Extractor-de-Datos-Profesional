@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { logActivity } from '../utils/activityLogger';
 
 // Departamentos disponibles en Europa
 export type EuropaDepartment =
@@ -138,6 +139,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         setCurrentUser(mockUser);
         setUserProfile(profile);
+
+        // Log activity
+        logActivity(
+            newUser.uid,
+            newUser.email,
+            newUser.displayName,
+            'REGISTRO',
+            `Usuario registrado en departamento: ${department}`,
+            department
+        );
     }
 
     // Login (MOCK)
@@ -181,10 +192,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         setCurrentUser(mockUser);
         setUserProfile(profile);
+
+        // Log activity
+        logActivity(
+            user.uid,
+            user.email,
+            user.displayName,
+            'LOGIN',
+            'Usuario inició sesión',
+            user.department
+        );
     }
 
     // Logout (MOCK)
     async function logout() {
+        // Log activity before logout
+        if (currentUser && userProfile) {
+            logActivity(
+                currentUser.uid,
+                currentUser.email || '',
+                currentUser.displayName || '',
+                'LOGOUT',
+                'Usuario cerró sesión',
+                userProfile.department
+            );
+        }
+
         // Simular delay de red
         await new Promise(resolve => setTimeout(resolve, 300));
 
