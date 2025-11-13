@@ -29,8 +29,8 @@ import { AuthModal } from './src/components/AuthModal.tsx';
 function AppContent() {
     const { currentUser, userProfile, logout } = useAuth();
 
-    // Detectar si estamos en la ruta /admin
-    const isAdminRoute = window.location.pathname === '/admin';
+    // Detectar si estamos en modo admin mediante parámetro ?admin
+    const isAdminRoute = new URLSearchParams(window.location.search).get('admin') === 'true';
 
     const [files, setFiles] = useState<UploadedFile[]>([]);
     const [activeFileId, setActiveFileId] = useState<string | null>(null);
